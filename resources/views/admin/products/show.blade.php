@@ -1,4 +1,7 @@
-@extends('layouts.admin')
+<x-admin-layout>
+    <x-slot name="header">
+        Show sản phẩm
+    </x-slot>
 
 @section('title', 'Product Details')
 @section('page-title', 'Product Details')
@@ -257,4 +260,4 @@
             </div>
         </div>
     </div>
-@endsection
+</x-admin-layout>

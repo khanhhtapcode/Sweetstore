@@ -1,4 +1,7 @@
-@extends('layouts.admin')
+<x-admin-layout>
+    <x-slot name="header">
+        Thêm đơn hàng mới
+    </x-slot>
 
 @section('title', 'Tạo Đơn Hàng Mới')
 
@@ -295,4 +298,4 @@
             updateTotal();
         });
     </script>
-@endsection
+</x-admin-layout>

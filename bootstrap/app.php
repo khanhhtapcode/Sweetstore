@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Đăng ký middleware admin
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'redirect.admin' => \App\Http\Middleware\RedirectAdminMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

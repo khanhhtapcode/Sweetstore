@@ -1,4 +1,7 @@
-@extends('layouts.admin')
+<x-admin-layout>
+    <x-slot name="header">
+        Chi Tiết Đơn Hàng
+    </x-slot>
 
 @section('title', 'Chi Tiết Đơn Hàng #' . $order->id)
 
@@ -384,4 +387,4 @@
             }
         }
     </style>
-@endsection
+</x-admin-layout>

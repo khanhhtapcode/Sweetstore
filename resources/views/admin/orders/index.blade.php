@@ -1,5 +1,8 @@
 {{-- resources/views/admin/orders/index.blade.php --}}
-@extends('layouts.admin')
+<x-admin-layout>
+    <x-slot name="header">
+        Quản Lý Đơn Hàng
+    </x-slot>
 
 @section('title', 'Quản Lý Đơn Hàng')
 
@@ -256,4 +259,4 @@
             $('#statusModal').modal('show');
         }
     </script>
-@endsection
+</x-admin-layout>

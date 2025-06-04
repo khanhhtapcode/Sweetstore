@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Middleware\RedirectAdminMiddleware;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,9 +19,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// User Dashboard - với middleware để redirect admin
 Route::get('/dashboard', function () {
     return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'verified', RedirectAdminMiddleware::class])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

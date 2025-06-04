@@ -1,4 +1,3 @@
-
 <x-admin-layout>
     <x-slot name="header">
         Admin Dashboard - Sweet Delights 🧁
@@ -61,7 +60,8 @@
                 + Thêm Sản Phẩm
             </a>
             <a href="{{ route('products.index') }}"
-               class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+               class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+               target="_blank">
                 👁️ Xem Website
             </a>
         </div>

@@ -1,412 +1,230 @@
-{{-- resources/views/admin/products/create.blade.php --}}
-@extends('layouts.admin')
+<x-admin-layout>
+    <x-slot name="header">
+        Thêm Sản Phẩm Mới
+    </x-slot>
 
-@section('title', 'Thêm Sản Phẩm Mới')
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-semibold text-gray-900">Thêm Sản Phẩm Mới</h2>
+                    <a href="{{ route('admin.products.index') }}"
+                       class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Quay Lại
+                    </a>
+                </div>
+            </div>
 
-@section('content')
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h3 class="card-title">Thêm Sản Phẩm Mới</h3>
-                        <a href="{{ route('admin.products.index') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Quay Lại
-                        </a>
-                    </div>
+            <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data" class="p-6">
+                @csrf
 
-                    <div class="card-body">
-                        @if ($errors->any())
-                            <div class="alert alert-danger">
-                                <ul class="mb-0">
+                @if ($errors->any())
+                    <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-800">Có lỗi xảy ra:</h3>
+                                <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
                                     @foreach ($errors->all() as $error)
                                         <li>{{ $error }}</li>
                                     @endforeach
                                 </ul>
                             </div>
-                        @endif
+                        </div>
+                    </div>
+                @endif
 
-                        <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data">
-                            @csrf
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Left Column -->
+                    <div class="space-y-6">
+                        <!-- Product Name -->
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                                Tên Sản Phẩm *
+                            </label>
+                            <input type="text"
+                                   id="name"
+                                   name="name"
+                                   value="{{ old('name') }}"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('name') border-red-500 @enderror"
+                                   placeholder="Nhập tên sản phẩm"
+                                   required>
+                            @error('name')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <!-- Basic Information -->
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h5>Thông Tin Cơ Bản</h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="form-group">
-                                                <label for="name">Tên Sản Phẩm <span class="text-danger">*</span></label>
-                                                <input type="text"
-                                                       class="form-control @error('name') is-invalid @enderror"
-                                                       id="name"
-                                                       name="name"
-                                                       value="{{ old('name') }}"
-                                                       required>
-                                                @error('name')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
+                        <!-- Category -->
+                        <div>
+                            <label for="category_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                Danh Mục *
+                            </label>
+                            <select id="category_id"
+                                    name="category_id"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('category_id') border-red-500 @enderror"
+                                    required>
+                                <option value="">Chọn danh mục</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}"
+                                        {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('category_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                                            <div class="form-group">
-                                                <label for="slug">Slug</label>
-                                                <input type="text"
-                                                       class="form-control @error('slug') is-invalid @enderror"
-                                                       id="slug"
-                                                       name="slug"
-                                                       value="{{ old('slug') }}">
-                                                @error('slug')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                                <small class="form-text text-muted">Để trống để tự động tạo từ tên sản phẩm</small>
-                                            </div>
-
-                                            <div class="form-group">
-                                                <label for="short_description">Mô Tả Ngắn</label>
-                                                <textarea class="form-control @error('short_description') is-invalid @enderror"
-                                                          id="short_description"
-                                                          name="short_description"
-                                                          rows="3">{{ old('short_description') }}</textarea>
-                                                @error('short_description')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-
-                                            <div class="form-group">
-                                                <label for="description">Mô Tả Chi Tiết</label>
-                                                <textarea class="form-control @error('description') is-invalid @enderror"
-                                                          id="description"
-                                                          name="description"
-                                                          rows="8">{{ old('description') }}</textarea>
-                                                @error('description')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Pricing -->
-                                    <div class="card mt-3">
-                                        <div class="card-header">
-                                            <h5>Giá Bán</h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="form-group">
-                                                        <label for="price">Giá Gốc <span class="text-danger">*</span></label>
-                                                        <div class="input-group">
-                                                            <input type="number"
-                                                                   class="form-control @error('price') is-invalid @enderror"
-                                                                   id="price"
-                                                                   name="price"
-                                                                   value="{{ old('price') }}"
-                                                                   min="0"
-                                                                   step="1000"
-                                                                   required>
-                                                            <div class="input-group-append">
-                                                                <span class="input-group-text">₫</span>
-                                                            </div>
-                                                            @error('price')
-                                                            <div class="invalid-feedback">{{ $message }}</div>
-                                                            @enderror
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="form-group">
-                                                        <label for="sale_price">Giá Khuyến Mãi</label>
-                                                        <div class="input-group">
-                                                            <input type="number"
-                                                                   class="form-control @error('sale_price') is-invalid @enderror"
-                                                                   id="sale_price"
-                                                                   name="sale_price"
-                                                                   value="{{ old('sale_price') }}"
-                                                                   min="0"
-                                                                   step="1000">
-                                                            <div class="input-group-append">
-                                                                <span class="input-group-text">₫</span>
-                                                            </div>
-                                                            @error('sale_price')
-                                                            <div class="invalid-feedback">{{ $message }}</div>
-                                                            @enderror
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Inventory -->
-                                    <div class="card mt-3">
-                                        <div class="card-header">
-                                            <h5>Kho Hàng</h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="form-group">
-                                                        <label for="sku">Mã SKU</label>
-                                                        <input type="text"
-                                                               class="form-control @error('sku') is-invalid @enderror"
-                                                               id="sku"
-                                                               name="sku"
-                                                               value="{{ old('sku') }}">
-                                                        @error('sku')
-                                                        <div class="invalid-feedback">{{ $message }}</div>
-                                                        @enderror
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="form-group">
-                                                        <label for="stock_quantity">Số Lượng Tồn Kho</label>
-                                                        <input type="number"
-                                                               class="form-control @error('stock_quantity') is-invalid @enderror"
-                                                               id="stock_quantity"
-                                                               name="stock_quantity"
-                                                               value="{{ old('stock_quantity', 0) }}"
-                                                               min="0">
-                                                        @error('stock_quantity')
-                                                        <div class="invalid-feedback">{{ $message }}</div>
-                                                        @enderror
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-4">
-                                    <!-- Product Settings -->
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h5>Cài Đặt</h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="form-group">
-                                                <label for="category_id">Danh Mục <span class="text-danger">*</span></label>
-                                                <select class="form-control @error('category_id') is-invalid @enderror"
-                                                        id="category_id"
-                                                        name="category_id"
-                                                        required>
-                                                    <option value="">-- Chọn danh mục --</option>
-                                                    @foreach($categories as $category)
-                                                        <option value="{{ $category->id }}"
-                                                            {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                                                            {{ $category->name }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                                @error('category_id')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-
-                                            <div class="form-group">
-                                                <div class="custom-control custom-switch">
-                                                    <input type="checkbox"
-                                                           class="custom-control-input"
-                                                           id="is_active"
-                                                           name="is_active"
-                                                           value="1"
-                                                        {{ old('is_active', 1) ? 'checked' : '' }}>
-                                                    <label class="custom-control-label" for="is_active">Kích Hoạt</label>
-                                                </div>
-                                            </div>
-
-                                            <div class="form-group">
-                                                <div class="custom-control custom-switch">
-                                                    <input type="checkbox"
-                                                           class="custom-control-input"
-                                                           id="is_featured"
-                                                           name="is_featured"
-                                                           value="1"
-                                                        {{ old('is_featured') ? 'checked' : '' }}>
-                                                    <label class="custom-control-label" for="is_featured">Sản Phẩm Nổi Bật</label>
-                                                </div>
-                                            </div>
-
-                                            <div class="form-group">
-                                                <label for="sort_order">Thứ Tự Sắp Xếp</label>
-                                                <input type="number"
-                                                       class="form-control @error('sort_order') is-invalid @enderror"
-                                                       id="sort_order"
-                                                       name="sort_order"
-                                                       value="{{ old('sort_order', 0) }}"
-                                                       min="0">
-                                                @error('sort_order')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Product Images -->
-                                    <div class="card mt-3">
-                                        <div class="card-header">
-                                            <h5>Hình Ảnh</h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="form-group">
-                                                <label for="image">Hình Ảnh Chính</label>
-                                                <input type="file"
-                                                       class="form-control-file @error('image') is-invalid @enderror"
-                                                       id="image"
-                                                       name="image"
-                                                       accept="image/*">
-                                                @error('image')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                                <div id="image-preview" class="mt-2"></div>
-                                            </div>
-
-                                            <div class="form-group">
-                                                <label for="gallery">Thư Viện Ảnh</label>
-                                                <input type="file"
-                                                       class="form-control-file @error('gallery') is-invalid @enderror"
-                                                       id="gallery"
-                                                       name="gallery[]"
-                                                       multiple
-                                                       accept="image/*">
-                                                @error('gallery')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                                <small class="form-text text-muted">Có thể chọn nhiều ảnh</small>
-                                                <div id="gallery-preview" class="mt-2 row"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- SEO -->
-                                    <div class="card mt-3">
-                                        <div class="card-header">
-                                            <h5>SEO</h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="form-group">
-                                                <label for="meta_title">Meta Title</label>
-                                                <input type="text"
-                                                       class="form-control @error('meta_title') is-invalid @enderror"
-                                                       id="meta_title"
-                                                       name="meta_title"
-                                                       value="{{ old('meta_title') }}">
-                                                @error('meta_title')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-
-                                            <div class="form-group">
-                                                <label for="meta_description">Meta Description</label>
-                                                <textarea class="form-control @error('meta_description') is-invalid @enderror"
-                                                          id="meta_description"
-                                                          name="meta_description"
-                                                          rows="3">{{ old('meta_description') }}</textarea>
-                                                @error('meta_description')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </div>
-                                    </div>
+                        <!-- Price -->
+                        <div>
+                            <label for="price" class="block text-sm font-medium text-gray-700 mb-2">
+                                Giá (VNĐ) *
+                            </label>
+                            <div class="relative">
+                                <input type="number"
+                                       id="price"
+                                       name="price"
+                                       value="{{ old('price') }}"
+                                       step="1000"
+                                       min="0"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('price') border-red-500 @enderror"
+                                       placeholder="0"
+                                       required>
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm">₫</span>
                                 </div>
                             </div>
+                            @error('price')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                            <div class="row mt-3">
-                                <div class="col-12">
-                                    <div class="form-group">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-save"></i> Lưu Sản Phẩm
-                                        </button>
-                                        <a href="{{ route('admin.products.index') }}" class="btn btn-secondary">
-                                            <i class="fas fa-times"></i> Hủy
-                                        </a>
-                                    </div>
-                                </div>
+                        <!-- Stock Quantity -->
+                        <div>
+                            <label for="stock_quantity" class="block text-sm font-medium text-gray-700 mb-2">
+                                Số Lượng Tồn Kho *
+                            </label>
+                            <input type="number"
+                                   id="stock_quantity"
+                                   name="stock_quantity"
+                                   value="{{ old('stock_quantity') }}"
+                                   min="0"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('stock_quantity') border-red-500 @enderror"
+                                   placeholder="Nhập số lượng"
+                                   required>
+                            @error('stock_quantity')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Status Checkboxes -->
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <input type="checkbox"
+                                       id="is_active"
+                                       name="is_active"
+                                       value="1"
+                                       {{ old('is_active', 1) ? 'checked' : '' }}
+                                       class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                                <label for="is_active" class="ml-3 text-sm font-medium text-gray-700">
+                                    Kích hoạt sản phẩm
+                                </label>
                             </div>
-                        </form>
+                            <div class="flex items-center">
+                                <input type="checkbox"
+                                       id="is_featured"
+                                       name="is_featured"
+                                       value="1"
+                                       {{ old('is_featured') ? 'checked' : '' }}
+                                       class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                                <label for="is_featured" class="ml-3 text-sm font-medium text-gray-700">
+                                    Sản phẩm nổi bật
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="space-y-6">
+                        <!-- Product Image -->
+                        <div>
+                            <label for="image_url" class="block text-sm font-medium text-gray-700 mb-2">
+                                URL Hình Ảnh
+                            </label>
+                            <input type="url"
+                                   id="image_url"
+                                   name="image_url"
+                                   value="{{ old('image_url') }}"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('image_url') border-red-500 @enderror"
+                                   placeholder="https://example.com/image.jpg">
+                            @error('image_url')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-1 text-sm text-gray-500">Nhập URL hình ảnh hoặc để trống</p>
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                                Mô Tả Sản Phẩm
+                            </label>
+                            <textarea id="description"
+                                      name="description"
+                                      rows="8"
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('description') border-red-500 @enderror"
+                                      placeholder="Mô tả chi tiết về sản phẩm...">{{ old('description') }}</textarea>
+                            @error('description')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Image Preview -->
+                        <div id="image-preview" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Xem Trước Hình Ảnh</label>
+                            <img id="preview-img" class="w-full h-48 object-cover rounded-lg border border-gray-200" alt="Preview">
+                        </div>
                     </div>
                 </div>
-            </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-end space-x-4 mt-8 pt-6 border-t border-gray-200">
+                    <a href="{{ route('admin.products.index') }}"
+                       class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                        Hủy
+                    </a>
+                    <button type="submit"
+                            class="px-6 py-3 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        Tạo Sản Phẩm
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
-@endsection
 
-@section('scripts')
-    <script src="https://cdn.ckeditor.com/4.16.2/standard/ckeditor.js"></script>
     <script>
-        $(document).ready(function() {
-            // Initialize CKEditor
-            CKEDITOR.replace('description');
+        // Image URL preview
+        document.getElementById('image_url').addEventListener('input', function() {
+            const url = this.value;
+            const preview = document.getElementById('image-preview');
+            const img = document.getElementById('preview-img');
 
-            // Auto generate slug from name
-            $('#name').on('input', function() {
-                var name = $(this).val();
-                var slug = name.toLowerCase()
-                    .replace(/[^a-z0-9\s-]/g, '')
-                    .replace(/\s+/g, '-')
-                    .replace(/-+/g, '-')
-                    .trim('-');
-                $('#slug').val(slug);
-            });
+            if (url) {
+                img.src = url;
+                preview.classList.remove('hidden');
 
-            // Auto generate SKU from name
-            $('#name').on('input', function() {
-                if (!$('#sku').val()) {
-                    var name = $(this).val();
-                    var sku = name.toUpperCase()
-                        .replace(/[^A-Z0-9\s]/g, '')
-                        .replace(/\s+/g, '-')
-                        .substring(0, 10) + '-' + Math.floor(Math.random() * 1000);
-                    $('#sku').val(sku);
-                }
-            });
-
-            // Preview main image
-            $('#image').on('change', function() {
-                var file = this.files[0];
-                if (file) {
-                    var reader = new FileReader();
-                    reader.onload = function(e) {
-                        $('#image-preview').html(
-                            '<img src="' + e.target.result + '" class="img-thumbnail" style="max-width: 200px;">'
-                        );
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-
-            // Preview gallery images
-            $('#gallery').on('change', function() {
-                var files = this.files;
-                $('#gallery-preview').empty();
-
-                for (var i = 0; i < files.length; i++) {
-                    var file = files[i];
-                    if (file) {
-                        var reader = new FileReader();
-                        reader.onload = function(e) {
-                            $('#gallery-preview').append(
-                                '<div class="col-3 mb-2">' +
-                                '<img src="' + e.target.result + '" class="img-thumbnail" style="width: 100%; height: 100px; object-fit: cover;">' +
-                                '</div>'
-                            );
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                }
-            });
-
-            // Validate sale price
-            $('#sale_price').on('input', function() {
-                var price = parseFloat($('#price').val()) || 0;
-                var salePrice = parseFloat($(this).val()) || 0;
-
-                if (salePrice > 0 && salePrice >= price) {
-                    alert('Giá khuyến mãi phải nhỏ hơn giá gốc!');
-                    $(this).val('');
-                }
-            });
+                img.onerror = function() {
+                    preview.classList.add('hidden');
+                };
+            } else {
+                preview.classList.add('hidden');
+            }
         });
     </script>
-@endsection
+</x-admin-layout>

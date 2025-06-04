@@ -1,5 +1,8 @@
 {{-- resources/views/admin/categories/edit.blade.php --}}
-@extends('layouts.admin')
+<x-admin-layout>
+    <x-slot name="header">
+        Chỉnh Sửa Danh Mục
+    </x-slot>
 
 @section('title', 'Chỉnh Sửa Danh Mục')
 
@@ -203,4 +206,4 @@
             });
         });
     </script>
-@endsection
+</x-admin-layout>
