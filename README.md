@@ -57,6 +57,14 @@ DB_PASSWORD=
    ```bash
    php artisan migrate
 ```
+### Note thêm: Nhớ chạy cả phần seeder
+
+```bash
+php artisan db:seed --class=DatabaseSeeder
+php artisan db:seed --class=CategorySeeder
+php artisan db:seed --class=ProductSeerder
+php artisan db:seed --class=AdminUserSeeder
+```
 ### 6. 📦 Cài đặt Node Modules
 ```bash
 npm install
