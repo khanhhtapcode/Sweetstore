@@ -116,9 +116,13 @@
                         </a>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        @if(isset($featured_products))
-                            @foreach($featured_products as $product)
+                    @php
+                        $featuredProducts = \App\Models\Product::with('category')->active()->featured()->take(4)->get();
+                    @endphp
+
+                    @if($featuredProducts->count() > 0)
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            @foreach($featuredProducts as $product)
                                 <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition duration-300">
                                     <a href="{{ route('products.show', $product) }}">
                                         @if($product->image_url)
@@ -142,8 +146,9 @@
                                     </div>
                                 </div>
                             @endforeach
-                        @endif
-                    </div>
+                        </div>
+                    @else
+                    @endif
                 </div>
             </div>
 
