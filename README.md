@@ -41,10 +41,7 @@ Tạo file .env từ bản mẫu:
 
 cp .env.example .env
 Chỉnh sửa các thông số kết nối cơ sở dữ liệu trong .env:
-
 env
-Sao chép
-Chỉnh sửa
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
@@ -66,7 +63,6 @@ npm install
 ```
 ### 7. ⚒️ Biên dịch frontend
 Phát triển:
-
 ```bash
 npm run dev
 ```
