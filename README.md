@@ -1,61 +1,92 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+🎯 Laravel Starter Project
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Một project Laravel được cấu hình sẵn với:
 
-## About Laravel
+- ✅ Laravel 10+
+- ⚡ Laravel Breeze (Authentication scaffolding)
+- 🎨 Tailwind CSS
+- 🔧 Laravel Mix (Webpack)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 📦 Yêu cầu hệ thống
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Trước khi bắt đầu, hãy đảm bảo bạn đã cài đặt:
 
-## Learning Laravel
+| Thành phần       | Phiên bản tối thiểu |
+|------------------|---------------------|
+| PHP              | >= 8.1              |
+| Composer         | ✅                  |
+| Node.js & NPM    | Node >= 16.x        |
+| MySQL / MariaDB  | ✅                  |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## 🚀 Bắt đầu nhanh
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 1. 📥 Clone dự án
 
-## Laravel Sponsors
+```bash
+git clone https://github.com/khanhhtapcode/Sweetstore.git
+cd Sweetstore
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 2. 📚 Cài đặt PHP dependencies
+```bash
+composer install
+```
+### 3. ⚙️ Cấu hình môi trường
+Tạo file .env từ bản mẫu:
+```bash
 
-### Premium Partners
+cp .env.example .env
+Chỉnh sửa các thông số kết nối cơ sở dữ liệu trong .env:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+env
+Sao chép
+Chỉnh sửa
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=sweetstore
+DB_USERNAME=root
+DB_PASSWORD=
+```
+### 4. 🔑 Generate app key
+   ```bash
+   php artisan key:generate
+```
+### 5. 🧱 Chạy migration
+   ```bash
+   php artisan migrate
+```
+### 6. 📦 Cài đặt Node Modules
+```bash
+npm install
+```
+### 7. ⚒️ Biên dịch frontend
+Phát triển:
 
-## Contributing
+```bash
+npm run dev
+```
+### 🌐 Khởi chạy ứng dụng
+```bash
+php artisan serve
+```
+Truy cập: http://127.0.0.1:8000/
+### ✅ Kiểm tra
+- ✔️ Trang chủ hoạt động
+- ✔️ Đăng ký / Đăng nhập
+- ✔️ Giao diện Tailwind
+- ✔️ Tài sản frontend được biên dịch
+### 🛠️ Troubleshooting
+❌ Lỗi "class not found": chạy lại composer install hoặc composer dump-autoload
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+❌ Lỗi Node: kiểm tra phiên bản Node >= 16
 
-## Code of Conduct
+❌ Không nhận CSS: đảm bảo đã chạy npm run dev
+### © Bản quyền
+- Tác giả: Family Guys
+- License: MIT
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
