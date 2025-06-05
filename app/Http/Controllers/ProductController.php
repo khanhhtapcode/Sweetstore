@@ -85,8 +85,12 @@ class ProductController extends Controller
             ->inRandomOrder()
             ->take(4)
             ->get();
-
-        return view('products.show', compact('product', 'relatedProducts'));
+        $averageRating = $product->ratings()->avg('rating') ?? 0;
+        return view('products.show', [
+        'product' => $product,
+        'averageRating' => $averageRating,
+        'relatedProducts' => $relatedProducts,
+    ]);
     }
 
     /**

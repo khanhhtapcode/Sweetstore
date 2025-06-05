@@ -9,6 +9,18 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\CartController;
 use App\Http\Middleware\RedirectAdminMiddleware;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\RatingController;
+use App\Http\Controllers\RatingReplyController;
+
+Route::post('/ratings/{rating}/replies', [RatingReplyController::class, 'store'])
+    ->middleware('auth')
+    ->name('ratings.replies.store');
+
+//Rating
+Route::post('/ratings', [RatingController::class, 'store'])->name('ratings.store')->middleware('auth');
+
+
+
 
 /*
 |--------------------------------------------------------------------------
