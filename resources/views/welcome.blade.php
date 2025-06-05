@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name', 'Laravel') }} - Bánh Ngọt Tươi Ngon</title>
-
+    <link rel="icon" type="image/x-icon" href="{{ asset('images/7717218_dessert_cake_mothers_day_mom_icon.ico') }}">
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
@@ -105,7 +105,137 @@
                 display: none;
             }
         }
-    </style>
+        /* Floating Contact Icons */
+        .floating-contact {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .contact-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contact-icon:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .contact-icon svg {
+            width: 24px;
+            height: 24px;
+            z-index: 2;
+        }
+
+        /* Phone icon */
+        .phone-icon {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+        }
+
+        .phone-icon:hover {
+            background: linear-gradient(135deg, #ff5252, #d32f2f);
+        }
+
+        /* Zalo icon */
+        .zalo-icon {
+            background: linear-gradient(135deg, #0084ff, #0068cc);
+        }
+
+        .zalo-icon:hover {
+            background: linear-gradient(135deg, #0068cc, #004499);
+        }
+
+        /* Email icon */
+        .email-icon {
+            background: linear-gradient(135deg, #00bcd4, #0097a7);
+        }
+
+        .email-icon:hover {
+            background: linear-gradient(135deg, #0097a7, #006064);
+        }
+
+        /* Facebook icon */
+        .facebook-icon {
+            background: linear-gradient(135deg, #1877f2, #166fe5);
+        }
+
+        .facebook-icon:hover {
+            background: linear-gradient(135deg, #166fe5, #1565c0);
+        }
+
+        /* Scroll to top icon */
+        .scroll-top-icon {
+            background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .scroll-top-icon.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-top-icon:hover {
+            background: linear-gradient(135deg, #7b1fa2, #4a148c);
+        }
+
+        /* Tooltip */
+        .contact-icon::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            right: 70px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .contact-icon::after {
+            content: '';
+            position: absolute;
+            right: 58px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 6px solid transparent;
+            border-left-color: rgba(0, 0, 0, 0.8);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .contact-icon:hover::before,
+        .contact-icon:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Pulse an
+</style>
 </head>
 
 <body class="antialiased">
@@ -679,13 +809,51 @@
         </div>
     </div>
 </section>
+<!-- Floating Contact Icons -->
+<div class="floating-contact">
+    <!-- Phone -->
+    <a href="tel:0123456789" class="contact-icon phone-icon" data-tooltip="Gọi điện: 0123 456 789">
+        <svg fill="currentColor" viewBox="0 0 24 24">
+            <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+        </svg>
+    </a>
+
+    <!-- Zalo -->
+    <a href="https://zalo.me/0987654321" target="_blank" class="contact-icon zalo-icon" data-tooltip="Chat Zalo: 0987 654 321">
+        <svg fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            <text x="12" y="16" text-anchor="middle" fill="white" font-size="8" font-weight="bold">Z</text>
+        </svg>
+    </a>
+
+    <!-- Email -->
+    <a href="mailto:hkkhanhpro@gmail.com" class="contact-icon email-icon" data-tooltip="Email: hkkhanhpro@gmail.com">
+        <svg fill="currentColor" viewBox="0 0 24 24">
+            <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+        </svg>
+    </a>
+
+    <!-- Facebook -->
+    <a href="https://www.facebook.com/khanhhkly23/" target="_blank" class="contact-icon facebook-icon" data-tooltip="Facebook Sweet Delights">
+        <svg fill="currentColor" viewBox="0 0 24 24">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+        </svg>
+    </a>
+
+    <!-- Scroll to top -->
+    <div class="contact-icon scroll-top-icon" id="scrollToTop" data-tooltip="Lên đầu trang">
+        <svg fill="currentColor" viewBox="0 0 24 24">
+            <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
+        </svg>
+    </div>
+</div>
 
 <!-- Footer -->
 <footer class="bg-gray-900 text-white py-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-                <img src="{{ asset('images/sweet-delights-logo.svg') }}" alt="Sweet Delights Logo" class="h-12 w-auto mb-4">
+                <img src="{{ asset('images/sweet-delights-logo.svg') }}" alt="Sweet Delights Logo" class="h-20 w-auto mb-4">
                 <p class="text-gray-400 mb-4">Bánh ngọt tươi ngon được làm với tình yêu và sự tận tâm từ năm 2014.</p>
                 <div class="flex space-x-4">
                     <a href="#" class="text-gray-400 hover:text-white transition duration-200">
@@ -978,6 +1146,25 @@
 
     scrollRightBtn.addEventListener('click', () => {
         productScrollContainer.scrollBy({ left: cardWidth, behavior: 'smooth' });
+    });
+    // Floating contact icons functionality
+    const scrollToTopBtn = document.getElementById('scrollToTop');
+
+    // Show/hide scroll to top button
+    window.addEventListener('scroll', function() {
+        if (window.pageYOffset > 300) {
+            scrollToTopBtn.classList.add('show');
+        } else {
+            scrollToTopBtn.classList.remove('show');
+        }
+    });
+
+    // Scroll to top when clicked
+    scrollToTopBtn.addEventListener('click', function() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
     });
 </script>
 </body>

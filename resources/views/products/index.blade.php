@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Sản Phẩm - Sweet Delights</title>
-
+    <link rel="icon" type="image/x-icon" href="{{ asset('images/7717218_dessert_cake_mothers_day_mom_icon.ico') }}">
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
@@ -16,10 +16,12 @@
 <!-- Navigation -->
 <nav class="bg-white shadow-lg sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
+        <div class="flex justify-between h-25">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
-                    <a href="{{ url('/') }}" class="text-2xl font-bold text-pink-600">🧁 Sweet Delights</a>
+                    <a href="{{ url('/') }}" class="text-2xl font-bold text-pink-600">
+                        <img src="{{ asset('images/sweet-delights-logo.svg') }}" alt="Sweet Delights Logo" class="h-20 w-auto">
+                    </a>
                 </div>
                 <div class="hidden md:ml-6 md:flex md:space-x-8">
                     <a href="{{ url('/') }}" class="text-gray-500 hover:text-gray-900 inline-flex items-center px-1 pt-1 text-sm font-medium transition duration-200">
@@ -335,7 +337,9 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-                <h3 class="text-xl font-bold mb-4">🧁 Sweet Delights</h3>
+                <h3 class="text-xl font-bold mb-4">
+                    <img src="{{ asset('images/sweet-delights-logo.svg') }}" alt="Sweet Delights Logo" class="h-20 w-auto mb-4">
+                </h3>
                 <p class="text-gray-400">Bánh ngọt tươi ngon được làm với tình yêu và sự tận tâm.</p>
             </div>
 
