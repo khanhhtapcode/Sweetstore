@@ -29,10 +29,11 @@
 <!-- Navigation -->
 <nav class="bg-white shadow-lg sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
+        <div class="flex justify-between h-25">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
-                    <h1 class="text-2xl font-bold text-pink-600">🧁 Sweet Delights</h1>
+                    <h1 class="text-2xl font-bold text-pink-600"><img src="{{ asset('images/sweet-delights-logo.svg') }}" alt="Sweet Delights Logo" class="h-30 w-auto">
+                    </h1>
                 </div>
                 <div class="hidden md:ml-6 md:flex md:space-x-8">
                     <a href="#home" class="text-gray-900 inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-pink-500">
@@ -233,7 +234,6 @@
                             @endif
                         </div>
                     </a>
-
                     <div class="p-6">
                         <div class="flex items-center justify-between mb-3">
                                 <span class="text-xs font-medium text-pink-600 bg-pink-50 px-3 py-1 rounded-full">
@@ -366,11 +366,11 @@
                 </div>
                 <p class="text-gray-600 mb-6 italic">"Bánh ở đây thực sự tuyệt vời! Tôi đã thử nhiều loại và tất cả đều rất ngon. Đặc biệt là bánh tiramisu, không thể nào quên được."</p>
                 <div class="flex items-center">
-                    <img src="https://images.unsplash.com/photo-1494790108755-2616b612b5bc?w=64&h=64&fit=crop&crop=face"
-                         alt="Nguyễn Thị Mai"
+                    <img src="{{ asset('images/278525968_698464674814175_5271679419822982177_n.jpg') }}"
+                         alt="Trần Duy Khánh"
                          class="w-12 h-12 rounded-full mr-4">
                     <div>
-                        <h4 class="font-semibold text-gray-900">Nguyễn Thị Mai</h4>
+                        <h4 class="font-semibold text-gray-900">Trần Duy Khánh</h4>
                         <p class="text-gray-500 text-sm">Khách hàng thường xuyên</p>
                     </div>
                 </div>
@@ -384,11 +384,11 @@
                 </div>
                 <p class="text-gray-600 mb-6 italic">"Dịch vụ giao hàng rất nhanh và bánh vẫn giữ được độ tươi ngon. Tôi rất hài lòng với chất lượng sản phẩm tại đây."</p>
                 <div class="flex items-center">
-                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face"
-                         alt="Trần Văn Nam"
+                    <img src="{{ asset('images/IMG_2814.JPG') }}"
+                         alt="Mai Thái Huy"
                          class="w-12 h-12 rounded-full mr-4">
                     <div>
-                        <h4 class="font-semibold text-gray-900">Trần Văn Nam</h4>
+                        <h4 class="font-semibold text-gray-900">Mai Thái Huy</h4>
                         <p class="text-gray-500 text-sm">Doanh nhân</p>
                     </div>
                 </div>
@@ -402,11 +402,11 @@
                 </div>
                 <p class="text-gray-600 mb-6 italic">"Tôi đã đặt bánh sinh nhật cho con và mọi người đều khen ngon lắm. Thiết kế bánh cũng rất đẹp mắt."</p>
                 <div class="flex items-center">
-                    <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=face"
-                         alt="Lê Thị Hoa"
+                    <img src="{{ asset('images/hihi.JPG') }}"
+                         alt="Lưu Đức Quang"
                          class="w-12 h-12 rounded-full mr-4">
                     <div>
-                        <h4 class="font-semibold text-gray-900">Lê Thị Hoa</h4>
+                        <h4 class="font-semibold text-gray-900">Lưu Đức Quang</h4>
                         <p class="text-gray-500 text-sm">Mẹ bỉm sữa</p>
                     </div>
                 </div>
@@ -534,7 +534,8 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-                <h3 class="text-xl font-bold mb-4">🧁 Sweet Delights</h3>
+                <h3 class="text-xl font-bold mb-4"><img src="{{ asset('images/sweet-delights-logo.svg') }}" alt="Sweet Delights Logo" class="h-25 w-auto">
+                </h3>
                 <p class="text-gray-400 mb-4">Bánh ngọt tươi ngon được làm với tình yêu và sự tận tâm từ năm 2014.</p>
                 <div class="flex space-x-4">
                     <a href="#" class="text-gray-400 hover:text-white transition duration-200">
@@ -585,7 +586,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         </svg>
-                        123 Đường ABC, Quận 1<br>TP. Hồ Chí Minh
+                        Học viện Ngân Hàng<br>TP. Hà Nội
                     </p>
                     <p class="flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -597,14 +598,14 @@
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                         </svg>
-                        info@sweetdelights.com
+                        hkkhanhpro@gmail.com
                     </p>
                 </div>
             </div>
         </div>
 
         <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Sweet Delights. Tất cả quyền được bảo lưu. Thiết kế bởi Sweet Delights Team.</p>
+            <p>&copy; 2024 Sweet Delights. Tất cả quyền được bảo lưu. Thiết kế bởi Family Guys Team.</p>
         </div>
     </div>
 </footer>
