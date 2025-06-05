@@ -112,10 +112,10 @@
 <!-- Navigation -->
 <nav class="bg-white shadow-lg sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
+        <div class="flex justify-between h-30">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
-                    <img src="{{ asset('images/sweet-delights-logo.svg') }}" alt="Sweet Delights Logo" class="h-10 w-auto">
+                    <img src="{{ asset('images/sweet-delights-logo.svg') }}" alt="Sweet Delights Logo" class="h-25 w-auto">
                 </div>
                 <div class="hidden md:ml-6 md:flex md:space-x-8">
                     <a href="#home"
