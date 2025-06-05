@@ -22,8 +22,8 @@
                             <div class="aspect-w-1 aspect-h-1 rounded-lg overflow-hidden">
                                 @if($product->image_url)
                                     <img src="{{ $product->image_url }}"
-                                         alt="{{ $product->name }}"
-                                         class="w-full h-96 object-center object-cover">
+                                    alt="{{ $product->name }}"
+                                    class="w-full h-96 object-center object-cover">
                                 @else
                                     <div class="w-full h-96 bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
                                         <span class="text-6xl">🧁</span>
@@ -51,7 +51,7 @@
 
                             <div class="mt-3">
                                 <h2 class="sr-only">Thông tin sản phẩm</h2>
-                                <p class="text-3xl text-pink-600 font-bold">{{ $product->formatted_price }}</p>
+                                <p class="text-3xl text-pink-600 font-bold">{{ number_format($product->price, 0, ',', '.') }}đ</p>
                             </div>
 
                             <!-- Stock Status -->
@@ -84,49 +84,45 @@
                             </div>
 
                             <!-- Add to Cart -->
-                            <form class="mt-8">
+                            <form action="{{ route('cart.add') }}" method="POST" class="mt-8">
+                                @csrf
+                                <input type="hidden" name="product_id" value="{{ $product->id }}">
                                 <div class="flex items-center space-x-4">
-                                    <!-- Quantity -->
-                                    <div class="flex items-center">
-                                        <label for="quantity" class="text-sm font-medium text-gray-700 mr-3">Số lượng:</label>
-                                        <div class="flex items-center border border-gray-300 rounded-md">
-                                            <button type="button"
-                                                    class="px-3 py-2 text-gray-600 hover:text-gray-800 focus:outline-none"
-                                                    onclick="decreaseQuantity()">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
-                                                </svg>
-                                            </button>
-                                            <input type="number"
-                                                   id="quantity"
-                                                   name="quantity"
-                                                   value="1"
-                                                   min="1"
-                                                   max="{{ $product->stock_quantity }}"
-                                                   class="w-16 px-3 py-2 text-center border-0 focus:ring-0 focus:outline-none">
-                                            <button type="button"
-                                                    class="px-3 py-2 text-gray-600 hover:text-gray-800 focus:outline-none"
-                                                    onclick="increaseQuantity()">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                                </svg>
-                                            </button>
-                                        </div>
+                                    <label for="quantity" class="text-sm font-medium text-gray-700">Số lượng:</label>
+                                    <div class="flex items-center border border-gray-300 rounded-md">
+                                        <button type="button"
+                                                class="px-3 py-2 text-gray-600 hover:text-gray-800 focus:outline-none"
+                                                onclick="decreaseQuantity()">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                            </svg>
+                                        </button>
+                                        <input type="number"
+                                               id="quantity"
+                                               name="quantity"
+                                               value="1"
+                                               min="1"
+                                               max="{{ $product->stock_quantity }}"
+                                               class="w-16 px-3 py-2 text-center border-0 focus:ring-0 focus:outline-none">
+                                        <button type="button"
+                                                class="px-3 py-2 text-gray-600 hover:text-gray-800 focus:outline-none"
+                                                onclick="increaseQuantity()">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                            </svg>
+                                        </button>
                                     </div>
                                 </div>
 
-                                <div class="mt-6 flex space-x-4">
+                                <div class="mt-6">
                                     @if($product->stock_quantity > 0)
                                         <button type="submit"
-                                                class="flex-1 bg-pink-600 border border-transparent rounded-md py-3 px-8 flex items-center justify-center text-base font-medium text-white hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500">
-                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17M17 13v4a2 2 0 01-2 2H9a2 2 0 01-2-2v-4m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01"></path>
-                                            </svg>
-                                            Thêm vào giỏ hàng
+                                                class="w-full bg-green-500 text-white py-3 rounded-md hover:bg-green-600 transition duration-300">
+                                            Thêm vào giỏ hàng - {{ number_format($product->price, 0, ',', '.') }}đ
                                         </button>
                                     @else
                                         <button type="button"
-                                                class="flex-1 bg-gray-300 border border-transparent rounded-md py-3 px-8 flex items-center justify-center text-base font-medium text-gray-500 cursor-not-allowed"
+                                                class="w-full bg-gray-300 text-gray-500 py-3 rounded-md cursor-not-allowed"
                                                 disabled>
                                             Hết hàng
                                         </button>
@@ -156,8 +152,8 @@
                                             <div class="aspect-w-1 aspect-h-1 bg-gray-200">
                                                 @if($relatedProduct->image_url)
                                                     <img src="{{ $relatedProduct->image_url }}"
-                                                         alt="{{ $relatedProduct->name }}"
-                                                         class="w-full h-48 object-cover hover:scale-105 transition duration-300">
+                                    alt="{{ $relatedProduct->name }}"
+                                    class="w-full h-96 object-center object-cover">
                                                 @else
                                                     <div class="w-full h-48 bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
                                                         <span class="text-4xl">🧁</span>
@@ -173,12 +169,17 @@
                                             </h3>
                                             <div class="flex items-center justify-between">
                                                 <span class="text-lg font-bold text-pink-600">
-                                                    {{ $relatedProduct->formatted_price }}
+                                                    {{ number_format($relatedProduct->price, 0, ',', '.') }}đ
                                                 </span>
                                                 @if($relatedProduct->stock_quantity > 0)
-                                                    <button class="bg-pink-600 text-white px-3 py-1 rounded text-sm hover:bg-pink-700 transition duration-300">
-                                                        Thêm vào giỏ
-                                                    </button>
+                                                    <form action="{{ route('cart.add') }}" method="POST">
+                                                        @csrf
+                                                        <input type="hidden" name="product_id" value="{{ $relatedProduct->id }}">
+                                                        <input type="hidden" name="quantity" value="1">
+                                                        <button type="submit" class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 transition duration-300">
+                                                            Thêm vào giỏ
+                                                        </button>
+                                                    </form>
                                                 @else
                                                     <span class="text-xs text-red-600">Hết hàng</span>
                                                 @endif

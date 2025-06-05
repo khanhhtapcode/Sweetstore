@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\CartController;
 use App\Http\Middleware\RedirectAdminMiddleware;
 use Illuminate\Support\Facades\Route;
 
@@ -17,7 +18,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('home');
 
 // User Dashboard - với middleware để redirect admin
 Route::get('/dashboard', function () {
@@ -51,7 +52,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Additional routes
     Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
 
-// Product additional routes
+    // Product additional routes
     Route::post('products/{product}/update-stock', [AdminProductController::class, 'updateStock'])->name('products.update-stock');
     Route::post('products/{product}/toggle-active', [AdminProductController::class, 'toggleActive'])->name('products.toggle-active');
     Route::post('products/{product}/toggle-featured', [AdminProductController::class, 'toggleFeatured'])->name('products.toggle-featured');
@@ -63,4 +64,35 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('users/{user}/change-role', [UserController::class, 'changeRole'])->name('users.change-role');
 });
 
-require __DIR__.'/auth.php';
+
+// Cart Routes
+// Xem giỏ hàng, thêm sản phẩm vào giỏ hàng, cập nhật giỏ hàng, xóa sản phẩm khỏi giỏ hàng
+Route::get('/show-cart', [CartController::class, 'show_cart'])->name('cart.show_cart');
+Route::post('/add-to-cart', [CartController::class, 'add_to_cart'])->name('cart.add');
+Route::post('/update-cart', [CartController::class, 'update_cart'])->name('cart.update');
+Route::post('/delete-cart/{productId}', [CartController::class, 'delete_from_cart'])->name('cart.delete');
+
+// Route::get('/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+// Route::post('/place-order', [CartController::class, 'place_order'])->name('cart.place_order');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+require __DIR__ . '/auth.php';
