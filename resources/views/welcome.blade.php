@@ -511,7 +511,7 @@
                 </div>
                 <p class="text-gray-600 mb-6 italic">"Bánh ở đây thực sự tuyệt vời! Tôi đã thử nhiều loại và tất cả đều rất ngon. Đặc biệt là bánh tiramisu, không thể nào quên được."</p>
                 <div class="flex items-center">
-                    <img src="https://ui-avatars.com/api/?name=Trần+Duy+Khánh&size=48&background=ff4d7a&color=ffffff&rounded=true"
+                    <img src="{{ asset('images/278525968_698464674814175_5271679419822982177_n.jpg') }}"
                          alt="Trần Duy Khánh"
                          class="w-12 h-12 rounded-full mr-4">
                     <div>
@@ -529,7 +529,7 @@
                 </div>
                 <p class="text-gray-600 mb-6 italic">"Dịch vụ giao hàng rất nhanh và bánh vẫn giữ được độ tươi ngon. Tôi rất hài lòng với chất lượng sản phẩm tại đây."</p>
                 <div class="flex items-center">
-                    <img src="https://ui-avatars.com/api/?name=Mai+Thái+Huy&size=48&background=ff4d7a&color=ffffff&rounded=true"
+                    <img src="{{ asset('images/IMG_2814.JPG') }}"
                          alt="Mai Thái Huy"
                          class="w-12 h-12 rounded-full mr-4">
                     <div>
@@ -547,7 +547,7 @@
                 </div>
                 <p class="text-gray-600 mb-6 italic">"Tôi đã đặt bánh sinh nhật cho con và mọi người đều khen ngon lắm. Thiết kế bánh cũng rất đẹp mắt."</p>
                 <div class="flex items-center">
-                    <img src="https://ui-avatars.com/api/?name=Lưu+Đức+Quang&size=48&background=ff4d7a&color=ffffff&rounded=true"
+                    <img src="{{ asset('images/hihi.JPG') }}"
                          alt="Lưu Đức Quang"
                          class="w-12 h-12 rounded-full mr-4">
                     <div>
