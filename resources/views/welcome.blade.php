@@ -15,6 +15,7 @@
 
     <!-- Custom Styles -->
     <style>
+        /* Custom Styles */
         .hero-bg {
             background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
         }
@@ -30,9 +31,7 @@
         /* Navigation link styles for smooth underline effect */
         .nav-link {
             position: relative;
-            /* Để định vị ::after */
             overflow: hidden;
-            /* Ẩn phần thừa của ::after */
         }
 
         .nav-link::after {
@@ -41,23 +40,71 @@
             bottom: 0;
             left: 0;
             width: 0;
-            /* Ban đầu width là 0 */
             height: 2px;
-            /* Độ dày của gạch chân */
             background-color: #ec4899;
-            /* Màu hồng giống border-pink-500 */
             transition: width 0.3s ease-in-out;
-            /* Hiệu ứng mượt mà cho width */
         }
 
         .nav-link.active::after {
             width: 100%;
-            /* Khi active, width mở rộng 100% */
         }
 
         .nav-link:hover::after {
             width: 100%;
-            /* Hiệu ứng gạch chân khi hover */
+        }
+
+        /* New styles for horizontal scroll */
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            /* IE and Edge */
+            scrollbar-width: none;
+            /* Firefox */
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+            /* Chrome, Safari, Opera */
+        }
+
+        #productScrollContainer {
+            display: flex;
+            gap: 8px;
+            padding-bottom: 16px;
+            /* Để tạo khoảng cách khi cuộn */
+            scroll-behavior: smooth;
+        }
+
+        #productScrollContainer .card-hover {
+            flex: 0 0 auto;
+            /* Ngăn các thẻ co giãn */
+            width: 280px;
+            /* Độ rộng cố định cho mỗi thẻ */
+        }
+
+        .draggable {
+            user-select: none;
+            /* Ngăn chọn văn bản khi kéo */
+        }
+
+        /* Định dạng nút điều hướng */
+        #scrollLeft,
+        #scrollRight {
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        #scrollLeft:hover,
+        #scrollRight:hover {
+            opacity: 1;
+        }
+
+        /* Ẩn nút trên mobile nếu cần */
+        @media (max-width: 640px) {
+
+            #scrollLeft,
+            #scrollRight {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -265,85 +312,103 @@
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                @php
-                    $featuredProducts = \App\Models\Product::with('category')->active()->featured()->take(8)->get();
-                @endphp
+            <div class="relative">
+                <div class="flex items-start gap-8 overflow-x-auto scroll-smooth snap-x hide-scrollbar"
+                    id="productScrollContainer">
+                    @php
+                        $featuredProducts = \App\Models\Product::with('category')->active()->featured()->take(8)->get();
+                    @endphp
 
-                @forelse($featuredProducts as $product)
-                    <div
-                        class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition duration-300 card-hover group">
-                        <a href="{{ route('products.show', $product) }}">
-                            <div class="aspect-w-1 aspect-h-1 bg-gray-200 relative overflow-hidden">
-                                @if($product->image_url)
-                                    <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
-                                        class="w-full h-64 object-cover group-hover:scale-110 transition duration-500">
-                                @else
-                                    <div
-                                        class="w-full h-64 bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
-                                        <span class="text-5xl">🧁</span>
+                    @forelse($featuredProducts as $product)
+                        <div
+                            class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition duration-300 card-hover group min-w-[280px] snap-center draggable">
+                            <a href="{{ route('products.show', $product) }}">
+                                <div class="aspect-w-1 aspect-h-1 bg-gray-200 relative overflow-hidden">
+                                    @if($product->image_url)
+                                        <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
+                                            class="w-full h-64 object-cover group-hover:scale-110 transition duration-500">
+                                    @else
+                                        <div
+                                            class="w-full h-64 bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
+                                            <span class="text-5xl">🧁</span>
+                                        </div>
+                                    @endif
+
+                                    <div class="absolute top-3 left-3">
+                                        <span
+                                            class="bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                                            ⭐ Nổi bật
+                                        </span>
                                     </div>
-                                @endif
 
-                                <div class="absolute top-3 left-3">
-                                    <span
-                                        class="bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full shadow-sm">
-                                        ⭐ Nổi bật
+                                    @if($product->stock_quantity <= 0)
+                                        <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                                            <span class="text-white font-bold text-lg">Hết hàng</span>
+                                        </div>
+                                    @endif
+                                </div>
+                            </a>
+
+                            <div class="p-6">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-xs font-medium text-pink-600 bg-pink-50 px-3 py-1 rounded-full">
+                                        {{ $product->category->name ?? 'Khác' }}
                                     </span>
+                                    @if($product->stock_quantity > 0)
+                                        <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">Còn hàng</span>
+                                    @else
+                                        <span class="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">Hết hàng</span>
+                                    @endif
                                 </div>
 
-                                @if($product->stock_quantity <= 0)
-                                    <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                                        <span class="text-white font-bold text-lg">Hết hàng</span>
-                                    </div>
-                                @endif
-                            </div>
-                        </a>
+                                <h3 class="font-semibold text-gray-900 mb-2 line-clamp-1">
+                                    <a href="{{ route('products.show', $product) }}"
+                                        class="hover:text-pink-600 transition duration-300">
+                                        {{ $product->name }}
+                                    </a>
+                                </h3>
 
-                        <div class="p-6">
-                            <div class="flex items-center justify-between mb-3">
-                                <span class="text-xs font-medium text-pink-600 bg-pink-50 px-3 py-1 rounded-full">
-                                    {{ $product->category->name ?? 'Khác' }}
-                                </span>
-                                @if($product->stock_quantity > 0)
-                                    <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">Còn hàng</span>
-                                @else
-                                    <span class="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">Hết hàng</span>
-                                @endif
-                            </div>
+                                <p class="text-sm text-gray-600 mb-4 line-clamp-2">
+                                    {{ Str::limit($product->description, 60) }}
+                                </p>
 
-                            <h3 class="font-semibold text-gray-900 mb-2 line-clamp-1">
-                                <a href="{{ route('products.show', $product) }}"
-                                    class="hover:text-pink-600 transition duration-300">
-                                    {{ $product->name }}
-                                </a>
-                            </h3>
-
-                            <p class="text-sm text-gray-600 mb-4 line-clamp-2">
-                                {{ Str::limit($product->description, 60) }}
-                            </p>
-
-                            <div class="flex items-center justify-between">
-                                <span class="text-xl font-bold text-pink-600">{{ $product->formatted_price }}</span>
-                                @if($product->stock_quantity > 0)
-                                    <button
-                                        class="bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition duration-300 text-sm font-medium transform hover:scale-105">
-                                        Thêm vào giỏ
-                                    </button>
-                                @else
-                                    <button class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed text-sm"
-                                        disabled>
-                                        Hết hàng
-                                    </button>
-                                @endif
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xl font-bold text-pink-600">{{ $product->formatted_price }}</span>
+                                    @if($product->stock_quantity > 0)
+                                        <button
+                                            class="bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition duration-300 text-sm font-medium transform hover:scale-105">
+                                            Thêm vào giỏ
+                                        </button>
+                                    @else
+                                        <button
+                                            class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed text-sm"
+                                            disabled>
+                                            Hết hàng
+                                        </button>
+                                    @endif
+                                </div>
                             </div>
                         </div>
-                    </div>
-                @empty
-                    <div class="col-span-full text-center py-8">
-                        <p class="text-gray-500">Chưa có sản phẩm nổi bật nào</p>
-                    </div>
-                @endforelse
+                    @empty
+                        <div class="col-span-full text-center py-8">
+                            <p class="text-gray-500">Chưa có sản phẩm nổi bật nào</p>
+                        </div>
+                    @endforelse
+                </div>
+
+                <!-- Nút điều hướng -->
+                <button id="scrollLeft"
+                    class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-pink-600 text-white p-3 rounded-full hover:bg-pink-700 transition duration-300 shadow-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <button id="scrollRight"
+                    class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-pink-600 text-white p-3 rounded-full hover:bg-pink-700 transition duration-300 shadow-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
             </div>
 
             <div class="text-center mt-12">
@@ -868,6 +933,68 @@
                 imageObserver.observe(img);
             });
         }
+
+        // Add horizontal drag scrolling for products
+        const productScrollContainer = document.getElementById('productScrollContainer');
+        let isDragging = false;
+        let startX;
+        let scrollLeft;
+
+        // Chỉ kích hoạt kéo thả khi nhấn vào thẻ sản phẩm
+        document.querySelectorAll('.draggable').forEach(item => {
+            item.addEventListener('mousedown', (e) => {
+                // Ngăn hành vi mặc định của thẻ <a> hoặc button bên trong
+                if (e.target.closest('a') || e.target.closest('button')) return;
+
+                isDragging = true;
+                startX = e.pageX - productScrollContainer.offsetLeft;
+                scrollLeft = productScrollContainer.scrollLeft;
+                productScrollContainer.style.cursor = 'grabbing';
+                e.preventDefault(); // Ngăn kéo thả ảnh hoặc các hành vi không mong muốn
+            });
+        });
+
+        productScrollContainer.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const x = e.pageX - productScrollContainer.offsetLeft;
+            const walk = (x - startX) * 2; // Tăng tốc độ cuộn để mượt hơn
+            productScrollContainer.scrollLeft = scrollLeft - walk;
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            productScrollContainer.style.cursor = 'grab';
+        });
+
+        productScrollContainer.addEventListener('mouseleave', () => {
+            isDragging = false;
+            productScrollContainer.style.cursor = 'grab';
+        });
+
+        // Keyboard navigation
+        productScrollContainer.setAttribute('tabindex', '0'); // Để container có thể focus
+        productScrollContainer.addEventListener('keydown', (e) => {
+            const cardWidth = 280 + 8; // Độ rộng thẻ + gap
+            if (e.key === 'ArrowLeft') {
+                productScrollContainer.scrollBy({ left: -cardWidth, behavior: 'smooth' });
+            } else if (e.key === 'ArrowRight') {
+                productScrollContainer.scrollBy({ left: cardWidth, behavior: 'smooth' });
+            }
+        });
+
+        // Button navigation
+        const scrollLeftBtn = document.getElementById('scrollLeft');
+        const scrollRightBtn = document.getElementById('scrollRight');
+        const cardWidth = 280 + 8; // Độ rộng thẻ + gap
+
+        scrollLeftBtn.addEventListener('click', () => {
+            productScrollContainer.scrollBy({ left: -cardWidth, behavior: 'smooth' });
+        });
+
+        scrollRightBtn.addEventListener('click', () => {
+            productScrollContainer.scrollBy({ left: cardWidth, behavior: 'smooth' });
+        });
     </script>
 </body>
 
