@@ -1,5 +1,3 @@
-
-
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center space-x-4">
@@ -13,7 +11,6 @@
             </h2>
         </div>
     </x-slot>
-
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -35,7 +32,6 @@
                             </div>
                         </div>
 
-
                         <div class="mt-10 px-4 sm:px-0 sm:mt-16 lg:mt-0">
                             <div class="flex items-center space-x-3 mb-4">
                                 @if($product->category)
@@ -50,14 +46,11 @@
                                 @endif
                             </div>
 
-
                             <h1 class="text-3xl font-extrabold tracking-tight text-gray-900">{{ $product->name }}</h1>
-
 
                             <div class="mt-3">
                                 <p class="text-3xl text-pink-600 font-bold">{{ $product->formatted_price }}</p>
                             </div>
-
 
                             <!-- Tình trạng kho -->
                             <div class="mt-4">
@@ -80,7 +73,6 @@
                                 @endif
                             </div>
 
-
                             <!-- Mô tả sản phẩm -->
                             <div class="mt-6">
                                 <h3 class="text-lg font-medium text-gray-900">Mô tả sản phẩm</h3>
@@ -89,9 +81,10 @@
                                 </div>
                             </div>
 
-
                             <!-- Thêm vào giỏ hàng -->
-                            <form class="mt-8">
+                            <form id="add-to-cart-form" class="mt-8">
+                                @csrf
+                                <input type="hidden" name="product_id" value="{{ $product->id }}">
                                 <div class="flex items-center space-x-4">
                                     <div class="flex items-center">
                                         <label for="quantity" class="text-sm font-medium text-gray-700 mr-3">Số lượng:</label>
@@ -121,7 +114,6 @@
                                     </div>
                                 </div>
 
-
                                 <div class="mt-6 flex space-x-4">
                                     @if($product->stock_quantity > 0)
                                         <button type="submit"
@@ -141,17 +133,16 @@
                                 </div>
                             </form>
 
-
                             <!-- Đánh giá trung bình -->
                             <div class="flex items-center w-full justify-center mb-10 mt-12">
                                 @for ($i = 1; $i <= 5; $i++)
                                     @if($i <= round($averageRating))
                                         <svg class="w-12 h-12 text-yellow-400 fill-current drop-shadow transition" viewBox="0 0 20 20">
-                                            <polygon points="9.9,1.1 7.6,6.6 1.6,7.3 6.1,11.2 4.8,17.1 9.9,14.1 15,17.1 13.7,11.2 18.2,7.3 12.2,6.6"/>
+                                            <polygon points="9.9,1.1 7.6,6.6 1.6,7.3 6.1,11.2 4.8,17.1 9.9,14.1 15,17.1 13.7,11.2 18.2,7.3 12.2,6.6" />
                                         </svg>
                                     @else
                                         <svg class="w-12 h-12 text-gray-300 fill-current transition" viewBox="0 0 20 20">
-                                            <polygon points="9.9,1.1 7.6,6.6 1.6,7.3 6.1,11.2 4.8,17.1 9.9,14.1 15,17.1 13.7,11.2 18.2,7.3 12.2,6.6"/>
+                                            <polygon points="9.9,1.1 7.6,6.6 1.6,7.3 6.1,11.2 4.8,17.1 9.9,14.1 15,17.1 13.7,11.2 18.2,7.3 12.2,6.6" />
                                         </svg>
                                     @endif
                                 @endfor
@@ -160,118 +151,82 @@
                                 </span>
                             </div>
 
-
                             <!-- Form đánh giá -->
-                           
-@if(auth()->check())
-    <form action="{{ route('ratings.store', $product) }}" method="POST" class="mb-4" id="rating-form">
-        @csrf
-        <input type="hidden" name="product_id" value="{{ $product->id }}">
-        <input type="hidden" name="rating" id="rating-value" value="0">
-        <label class="block mb-2 font-medium">Đánh giá:</label>
-        <div class="flex items-center mb-2" id="star-rating">
-            @for($i = 1; $i <= 5; $i++)
-                <svg data-star="{{ $i }}" class="w-8 h-8 text-gray-300 cursor-pointer transition" fill="currentColor" viewBox="0 0 20 20">
-                    <polygon points="9.9,1.1 7.6,6.6 1.6,7.3 6.1,11.2 4.8,17.1 9.9,14.1 15,17.1 13.7,11.2 18.2,7.3 12.2,6.6"/>
-                </svg>
-            @endfor
-        </div>
-        <textarea name="comment" placeholder="Nhận xét của bạn..." class="block w-full mt-2"></textarea>
-        <button type="submit" class="mt-2 bg-pink-600 text-white px-4 py-2 rounded">Gửi đánh giá</button>
-    </form>
-@endif
-
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const stars = document.querySelectorAll('#star-rating svg');
-        const ratingInput = document.getElementById('rating-value');
-        let currentRating = 0;
-
-
-        stars.forEach((star, idx) => {
-            star.addEventListener('mouseenter', () => {
-                highlightStars(idx + 1);
-            });
-            star.addEventListener('mouseleave', () => {
-                highlightStars(currentRating);
-            });
-            star.addEventListener('click', () => {
-                currentRating = idx + 1;
-                ratingInput.value = currentRating;
-                highlightStars(currentRating);
-            });
-        });
-
-
-        function highlightStars(rating) {
-            stars.forEach((star, i) => {
-                if (i < rating) {
-                    star.classList.remove('text-gray-300');
-                    star.classList.add('text-yellow-400');
-                } else {
-                    star.classList.remove('text-yellow-400');
-                    star.classList.add('text-gray-300');
-                }
-            });
-        }
-    });
-</script>
-
-
-                           
-<!-- Danh sách nhận xét -->
-@if($product->ratings->count())
-    <div class="mt-8">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Nhận xét của khách hàng</h3>
-        <div class="space-y-6">
-            @foreach($product->ratings->sortByDesc('created_at') as $rating)
-                <div class="bg-white border rounded-lg p-4 shadow-sm">
-                    <div class="flex items-center mb-2">
-                        @for($i = 1; $i <= 5; $i++)
-                            <svg class="w-4 h-4 {{ $i <= $rating->rating ? 'text-yellow-400' : 'text-gray-300' }} fill-current" viewBox="0 0 20 20">
-                                <polygon points="9.9,1.1 7.6,6.6 1.6,7.3 6.1,11.2 4.8,17.1 9.9,14.1 15,17.1 13.7,11.2 18.2,7.3 12.2,6.6"/>
-                            </svg>
-                        @endfor
-                        <span class="ml-2 text-xs text-gray-500">
-                            {{ $rating->user->name ?? 'Ẩn danh' }} - {{ $rating->created_at->format('d/m/Y H:i') }}
-                        </span>
-                    </div>
-                    <div class="text-gray-700 text-sm mb-2">
-                        {{ $rating->comment }}
-                    </div>
-
-
-                    <!-- Danh sách trả lời -->
-                    @if($rating->replies && $rating->replies->count())
-                        <div class="ml-6 mt-2 space-y-2">
-                            @foreach($rating->replies as $reply)
-                                <div class="bg-gray-50 border rounded px-3 py-2 text-sm">
-                                    <span class="font-semibold">{{ $reply->user->name ?? 'Ẩn danh' }}:</span>
-                                    {{ $reply->reply }}
-                                    <span class="text-xs text-gray-400 ml-2">{{ $reply->created_at->format('d/m/Y H:i') }}</span>
+                            @if(auth()->check())
+                                <form action="{{ route('ratings.store', $product) }}" method="POST" class="mb-4" id="rating-form">
+                                    @csrf
+                                    <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                    <input type="hidden" name="rating" id="rating-value" value="0">
+                                    <label class="block mb-2 font-medium">Đánh giá:</label>
+                                    <div class="flex items-center mb-2" id="star-rating">
+                                        @for($i = 1; $i <= 5; $i++)
+                                            <svg data-star="{{ $i }}" class="w-8 h-8 text-gray-300 cursor-pointer transition" fill="currentColor" viewBox="0 0 20 20">
+                                                <polygon points="9.9,1.1 7.6,6.6 1.6,7.3 6.1,11.2 4.8,17.1 9.9,14.1 15,17.1 13.7,11.2 18.2,7.3 12.2,6.6" />
+                                            </svg>
+                                        @endfor
+                                    </div>
+                                    <textarea name="comment" placeholder="Nhận xét của bạn..." class="block w-full mt-2"></textarea>
+                                    <button type="submit" class="mt-2 bg-pink-600 text-white px-4 py-2 rounded">Gửi đánh giá</button>
+                                </form>
+                            @else
+                                <div class="mb-4 text-center">
+                                    <p class="text-gray-600">Vui lòng <a href="{{ route('login') }}" class="text-pink-600 hover:underline">đăng nhập</a> để gửi đánh giá.</p>
                                 </div>
-                            @endforeach
-                        </div>
-                    @endif
+                            @endif
 
+                            <!-- Danh sách nhận xét -->
+                            @if($product->ratings->count())
+                                <div class="mt-8">
+                                    <h3 class="text-lg font-bold text-gray-800 mb-4">Nhận xét của khách hàng</h3>
+                                    <div class="space-y-6">
+                                        @foreach($product->ratings->sortByDesc('created_at') as $rating)
+                                            <div class="bg-white border rounded-lg p-4 shadow-sm">
+                                                <div class="flex items-center mb-2">
+                                                    @for($i = 1; $i <= 5; $i++)
+                                                        <svg class="w-4 h-4 {{ $i <= $rating->rating ? 'text-yellow-400' : 'text-gray-300' }} fill-current" viewBox="0 0 20 20">
+                                                            <polygon points="9.9,1.1 7.6,6.6 1.6,7.3 6.1,11.2 4.8,17.1 9.9,14.1 15,17.1 13.7,11.2 18.2,7.3 12.2,6.6" />
+                                                        </svg>
+                                                    @endfor
+                                                    <span class="ml-2 text-xs text-gray-500">
+                                                        {{ optional($rating->user)->name ?? 'Ẩn danh' }} - {{ $rating->created_at->format('d/m/Y H:i') }}
+                                                    </span>
+                                                </div>
+                                                <div class="text-gray-700 text-sm mb-2">
+                                                    {{ $rating->comment }}
+                                                </div>
 
-                    <!-- Form trả lời đánh giá -->
-                    @if(auth()->check())
-                        <form action="{{ route('ratings.replies.store', $rating->id) }}" method="POST" class="ml-6 mt-2 flex items-center space-x-2">
-                            @csrf
-                            <input type="text" name="reply" class="border rounded px-2 py-1 w-2/3" placeholder="Trả lời đánh giá này..." required>
-                            <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded">Gửi</button>
-                        </form>
-                    @endif
-                </div>
-            @endforeach
-        </div>
-    </div>
-@else
-    <div class="mt-8 text-gray-500 italic">Chưa có nhận xét nào.</div>
-@endif
+                                                <!-- Danh sách trả lời -->
+                                                @if($rating->replies && $rating->replies->count())
+                                                    <div class="ml-6 mt-2 space-y-2">
+                                                        @foreach($rating->replies as $reply)
+                                                            <div class="bg-gray-50 border rounded px-3 py-2 text-sm">
+                                                                <span class="font-semibold">{{ optional($reply->user)->name ?? 'Ẩn danh' }}:</span>
+                                                                {{ $reply->reply }}
+                                                                <span class="text-xs text-gray-400 ml-2">{{ $reply->created_at->format('d/m/Y H:i') }}</span>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                @endif
 
+                                                <!-- Form trả lời đánh giá -->
+                                                @if(auth()->check())
+                                                    <form action="{{ route('ratings.replies.store', $rating->id) }}" method="POST" class="ml-6 mt-2 flex items-center space-x-2">
+                                                        @csrf
+                                                        <input type="text" name="reply" class="border rounded px-2 py-1 w-2/3" placeholder="Trả lời đánh giá này..." required>
+                                                        <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded">Gửi</button>
+                                                    </form>
+                                                @else
+                                                    <div class="ml-6 mt-2 text-sm text-gray-600">
+                                                        <a href="{{ route('login') }}" class="text-pink-600 hover:underline">Đăng nhập</a> để trả lời đánh giá.
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @else
+                                <div class="mt-8 text-gray-500 italic">Chưa có nhận xét nào.</div>
+                            @endif
 
                             <!-- Thông tin liên hệ -->
                             <div class="mt-8 p-4 bg-gray-50 rounded-lg">
@@ -283,7 +238,6 @@
                             </div>
                         </div>
                     </div>
-
 
                     <!-- Sản phẩm liên quan -->
                     @if($relatedProducts->count() > 0)
@@ -316,9 +270,14 @@
                                                     {{ $relatedProduct->formatted_price }}
                                                 </span>
                                                 @if($relatedProduct->stock_quantity > 0)
-                                                    <button class="bg-pink-600 text-white px-3 py-1 rounded text-sm hover:bg-pink-700 transition duration-300">
-                                                        Thêm vào giỏ
-                                                    </button>
+                                                    <form action="{{ route('cart.add') }}" method="POST" class="inline">
+                                                        @csrf
+                                                        <input type="hidden" name="product_id" value="{{ $relatedProduct->id }}">
+                                                        <input type="hidden" name="quantity" value="1">
+                                                        <button type="submit" class="bg-pink-600 text-white px-3 py-1 rounded text-sm hover:bg-pink-700 transition duration-300">
+                                                            Thêm vào giỏ
+                                                        </button>
+                                                    </form>
                                                 @else
                                                     <span class="text-xs text-red-600">Hết hàng</span>
                                                 @endif
@@ -334,6 +293,26 @@
         </div>
     </div>
 
+    <!-- Popup thông báo -->
+    <div id="cart-success-popup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg p-6 max-w-sm w-full text-center">
+            <div class="mb-4">
+                <svg class="w-12 h-12 text-green-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Cảm ơn bạn!</h3>
+            <p class="text-gray-600 mb-6">Sản phẩm đã được thêm vào giỏ hàng thành công.</p>
+            <div class="flex justify-center space-x-4">
+                <button id="continue-shopping" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                    Tiếp tục mua sắm
+                </button>
+                <button id="go-to-checkout" class="px-4 py-2 bg-yellow-400 text-gray-900 rounded hover:bg-yellow-500">
+                    Đến giỏ hàng
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
         function increaseQuantity() {
@@ -341,22 +320,100 @@
             const max = parseInt(quantityInput.getAttribute('max'));
             const current = parseInt(quantityInput.value);
 
-
             if (current < max) {
                 quantityInput.value = current + 1;
             }
         }
-
 
         function decreaseQuantity() {
             const quantityInput = document.getElementById('quantity');
             const min = parseInt(quantityInput.getAttribute('min'));
             const current = parseInt(quantityInput.value);
 
-
             if (current > min) {
                 quantityInput.value = current - 1;
             }
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Xử lý form "Thêm vào giỏ hàng"
+            const addToCartForm = document.getElementById('add-to-cart-form');
+            const popup = document.getElementById('cart-success-popup');
+            const continueShoppingBtn = document.getElementById('continue-shopping');
+            const goToCheckoutBtn = document.getElementById('go-to-checkout');
+
+            if (addToCartForm) {
+                addToCartForm.addEventListener('submit', function(event) {
+                    event.preventDefault();
+
+                    const formData = new FormData(addToCartForm);
+                    fetch("{{ route('cart.add') }}", {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRF-TOKEN': formData.get('_token'),
+                            'Accept': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Hiển thị popup
+                            popup.classList.remove('hidden');
+                        } else {
+                            // Hiển thị thông báo lỗi nếu có
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Có lỗi xảy ra, vui lòng thử lại.');
+                    });
+                });
+            }
+
+            // Xử lý nút "Tiếp tục mua sắm"
+            continueShoppingBtn.addEventListener('click', function() {
+                popup.classList.add('hidden');
+                window.location.href = "{{ route('products.index') }}";
+            });
+
+            // Xử lý nút "Đến giỏ hàng"
+            goToCheckoutBtn.addEventListener('click', function() {
+                popup.classList.add('hidden');
+                window.location.href = "{{ route('cart.show_cart') }}";
+            });
+
+            // Xử lý đánh giá sao
+            const stars = document.querySelectorAll('#star-rating svg');
+            const ratingInput = document.getElementById('rating-value');
+            let currentRating = 0;
+
+            stars.forEach((star, idx) => {
+                star.addEventListener('mouseenter', () => {
+                    highlightStars(idx + 1);
+                });
+                star.addEventListener('mouseleave', () => {
+                    highlightStars(currentRating);
+                });
+                star.addEventListener('click', () => {
+                    currentRating = idx + 1;
+                    ratingInput.value = currentRating;
+                    highlightStars(currentRating);
+                });
+            });
+
+            function highlightStars(rating) {
+                stars.forEach((star, i) => {
+                    if (i < rating) {
+                        star.classList.remove('text-gray-300');
+                        star.classList.add('text-yellow-400');
+                    } else {
+                        star.classList.remove('text-yellow-400');
+                        star.classList.add('text-gray-300');
+                    }
+                });
+            }
+        });
     </script>
 </x-app-layout>

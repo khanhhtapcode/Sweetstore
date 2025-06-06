@@ -98,7 +98,7 @@
                 display: none;
             }
         }
-<<<<<<< Updated upstream
+
         /* Floating Contact Icons */
         .floating-contact {
             position: fixed;
@@ -228,11 +228,10 @@
             visibility: visible;
         }
 
-        /* Pulse an
-</style>
-=======
+        .contact-icon:hover::before {
+            right: 80px;
+        }
 
-        /* Cart Pop-up Overlay Styles */
         /* Cart Pop-up Overlay Styles */
         #cartOverlay {
             display: none;
@@ -348,7 +347,6 @@
             }
         }
     </style>
->>>>>>> Stashed changes
 </head>
 
 <!-- Navigation -->
@@ -385,14 +383,14 @@
 
             <div class="flex items-center space-x-4">
                 <!-- Cart Icon -->
-                <button onclick="openCartOverlay()" class="relative p-2 text-gray-600 hover:text-gray-900 transition duration-200">
+                <button @if(auth()->check()) onclick="openCartOverlay()" @else onclick="showLoginPrompt()" @endif class="relative p-2 text-gray-600 hover:text-gray-900 transition duration-200">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17M17 13v4a2 2 0 01-2 2H9a2 2 0 01-2-2v-4m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
                     </svg>
                     <span
                         class="absolute -top-1 -right-1 bg-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {{ count(session('cart', [])) }}
+                        {{ auth()->check() ? \App\Models\CartItem::where('user_id', auth()->id())->count() : 0 }}
                     </span>
                 </button>
 
@@ -421,9 +419,13 @@
 <!-- Cart Pop-up Overlay -->
 <div id="cartOverlay">
     <div id="cartContent">
-        @include('pages.cart.overlay', ['cart' => session('cart', []), 'totalPrice' => array_sum(array_map(function ($item) {
-        return $item['quantity'] * $item['product_price'];
-        }, session('cart', [])))])
+        @php
+        $cartItems = auth()->check() ? \App\Models\CartItem::where('user_id', auth()->id())->get() : collect([]);
+        $totalPrice = $cartItems->sum(function ($item) {
+        return $item->quantity * $item->price;
+        });
+        @endphp
+        @include('pages.cart.overlay', compact('cartItems', 'totalPrice'))
     </div>
 </div>
 
@@ -566,7 +568,7 @@
         <div class="relative">
             <div class="flex items-start gap-8 overflow-x-auto scroll-smooth snap-x hide-scrollbar" id="productScrollContainer">
                 @php
-                    $featuredProducts = \App\Models\Product::with('category')->active()->featured()->take(8)->get();
+                $featuredProducts = \App\Models\Product::with('category')->active()->featured()->take(8)->get();
                 @endphp
 
                 @forelse($featuredProducts as $product)
@@ -574,69 +576,76 @@
                     <a href="{{ route('products.show', $product) }}">
                         <div class="aspect-w-1 aspect-h-1 bg-gray-200 relative overflow-hidden">
                             @if($product->image_url)
-                                <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-64 object-cover group-hover:scale-110 transition duration-500">
+                            <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-64 object-cover group-hover:scale-110 transition duration-500">
                             @else
-                                <div class="w-full h-64 bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
-                                    <span class="text-5xl">🧁</span>
-                                </div>
+                            <div class="w-full h-64 bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
+                                <span class="text-5xl">🧁</span>
+                            </div>
                             @endif
                             <div class="absolute top-3 left-3">
                                 <span class="bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full shadow-sm">⭐ Nổi bật</span>
                             </div>
                             @if(($product->stock_quantity ?? 0) <= 0)
                                 <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                                    <span class="text-white font-bold text-lg">Hết hàng</span>
-                                </div>
-                            @endif
+                                <span class="text-white font-bold text-lg">Hết hàng</span>
                         </div>
-                    </a>
-                    <div class="p-6">
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="text-xs font-medium text-pink-600 bg-pink-50 px-3 py-1 rounded-full">{{ $product->category->name ?? 'Khác' }}</span>
-                            @if(($product->stock_quantity ?? 0) > 0)
-                                <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">Còn hàng</span>
-                            @else
-                                <span class="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">Hết hàng</span>
-                            @endif
-                        </div>
-                        <h3 class="font-semibold text-gray-900 mb-2 line-clamp-1">
-                            <a href="{{ route('products.show', $product) }}" class="hover:text-pink-600 transition duration-300">{{ $product->name }}</a>
-                        </h3>
-                        <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ Str::limit($product->description, 60) }}</p>
-                        <div class="flex items-center justify-between">
-                            <span class="text-xl font-bold text-pink-600">{{ $product->formatted_price }}</span>
-                            @if(($product->stock_quantity ?? 0) > 0)
-                                <form action="{{ route('cart.add', $product) }}" method="POST" style="display:inline;" class="cart-form">
-                                    @csrf
-                                    <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                    <button type="submit" class="add-to-cart bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition duration-300 text-sm font-medium transform hover:scale-105" data-product-id="{{ $product->id }}" data-loading-text="...">
-                                        Thêm vào giỏ
-                                    </button>
-                                </form>
-                            @else
-                                <button class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed text-sm" disabled>Hết hàng</button>
-                            @endif
-                        </div>
+                        @endif
+                </div>
+                </a>
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-medium text-pink-600 bg-pink-50 px-3 py-1 rounded-full">{{ $product->category->name ?? 'Khác' }}</span>
+                        @if(($product->stock_quantity ?? 0) > 0)
+                        <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">Còn hàng</span>
+                        @else
+                        <span class="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">Hết hàng</span>
+                        @endif
+                    </div>
+                    <h3 class="font-semibold text-gray-900 mb-2 line-clamp-1">
+                        <a href="{{ route('products.show', $product) }}" class="hover:text-pink-600 transition duration-300">{{ $product->name }}</a>
+                    </h3>
+                    <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ Str::limit($product->description, 60) }}</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xl font-bold text-pink-600">{{ $product->formatted_price }}</span>
+                        @if(($product->stock_quantity ?? 0) > 0)
+                        @if(auth()->check())
+                        <form action="{{ route('cart.add') }}" method="POST" style="display:inline" class="cart-form">
+                            @csrf
+                            <input type="hidden" name="product_id" value="{{ $product->id }}">
+                            <input type="hidden" name="quantity" value="1"> <!-- Đảm bảo quantity là 1 -->
+                            <button type="submit" class="add-to-cart bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition duration-300 text-sm font-medium transform hover:scale-105" data-product-id="{{ $product->id }}" data-loading-text="...">
+                                Thêm vào giỏ
+                            </button>
+                        </form>
+                        @else
+                        <button onclick="showLoginPrompt()" class="bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition duration-300 text-sm font-medium transform hover:scale-105">
+                            Thêm vào giỏ
+                        </button>
+                        @endif
+                        @else
+                        <button class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed text-sm" disabled>Hết hàng</button>
+                        @endif
                     </div>
                 </div>
-                @empty
-                    <div class="col-span-full text-center py-8">
-                        <p class="text-gray-500">Chưa có sản phẩm nổi bật nào</p>
-                    </div>
-                @endforelse
             </div>
-            <!-- Nút điều hướng -->
-            <button id="scrollLeft" class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-pink-600 text-white p-3 rounded-full hover:bg-pink-700 transition duration-300 shadow-lg">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                </svg>
-            </button>
-            <button id="scrollRight" class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-pink-600 text-white p-3 rounded-full hover:bg-pink-700 transition duration-300 shadow-lg">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-            </button>
+            @empty
+            <div class="col-span-full text-center py-8">
+                <p class="text-gray-500">Chưa có sản phẩm nổi bật nào</p>
+            </div>
+            @endforelse
         </div>
+        <!-- Nút điều hướng -->
+        <button id="scrollLeft" class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-pink-600 text-white p-3 rounded-full hover:bg-pink-700 transition duration-300 shadow-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+        </button>
+        <button id="scrollRight" class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-pink-600 text-white p-3 rounded-full hover:bg-pink-700 transition duration-300 shadow-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+        </button>
+    </div>
     </div>
 </section>
 
@@ -901,14 +910,14 @@
     <!-- Phone -->
     <a href="tel:0123456789" class="contact-icon phone-icon" data-tooltip="Gọi điện: 0123 456 789">
         <svg fill="currentColor" viewBox="0 0 24 24">
-            <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+            <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
         </svg>
     </a>
 
     <!-- Zalo -->
     <a href="https://zalo.me/0987654321" target="_blank" class="contact-icon zalo-icon" data-tooltip="Chat Zalo: 0987 654 321">
         <svg fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
             <text x="12" y="16" text-anchor="middle" fill="white" font-size="8" font-weight="bold">Z</text>
         </svg>
     </a>
@@ -916,21 +925,21 @@
     <!-- Email -->
     <a href="mailto:hkkhanhpro@gmail.com" class="contact-icon email-icon" data-tooltip="Email: hkkhanhpro@gmail.com">
         <svg fill="currentColor" viewBox="0 0 24 24">
-            <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+            <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
         </svg>
     </a>
 
     <!-- Facebook -->
     <a href="https://www.facebook.com/khanhhkly23/" target="_blank" class="contact-icon facebook-icon" data-tooltip="Facebook Sweet Delights">
         <svg fill="currentColor" viewBox="0 0 24 24">
-            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
         </svg>
     </a>
 
     <!-- Scroll to top -->
     <div class="contact-icon scroll-top-icon" id="scrollToTop" data-tooltip="Lên đầu trang">
         <svg fill="currentColor" viewBox="0 0 24 24">
-            <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
+            <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z" />
         </svg>
     </div>
 </div>
@@ -1013,365 +1022,287 @@
             <p>© 2024 Sweet Delights. Tất cả quyền được bảo lưu. Thiết kế bởi Family Guys Team.</p>
         </div>
     </div>
-</footer>
+    <logir>
 
-<script>
-    // Ensure CSRF token is included
-    document.addEventListener('DOMContentLoaded', () => {
-        if (!document.querySelector('meta[name="csrf-token"]')) {
-            console.error('CSRF token meta tag is missing!');
-        }
-    });
+        <script>
+            // Show notification
+            function showNotification(message, type = 'success') {
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg text-white z-50 transition-all duration-300 transform translate-x-full ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+    }`;
+                notification.textContent = message;
+                document.body.appendChild(notification);
 
-    // Cart Overlay Functions
-    function openCartOverlay() {
-        document.getElementById('cartOverlay').style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
+                setTimeout(() => {
+                    notification.classList.remove('translate-x-full');
+                }, 100);
 
-    function closeCartOverlay() {
-        document.getElementById('cartOverlay').style.display = 'none';
-        document.body.style.overflow = 'auto';
-    }
-
-    // Handle cart actions (add, increase, decrease, delete) via AJAX
-    function handleCartAction(event, element) {
-        event.preventDefault();
-
-        let url, method, formData, button;
-
-        // Debug element
-        console.log('handleCartAction called with element:', element.tagName, element);
-
-        // Determine element type
-        if (element.tagName === 'FORM') {
-            url = element.action;
-            method = 'POST';
-            formData = new FormData(element);
-            button = element.querySelector('button[type="submit"]');
-        } else if (element.tagName === 'BUTTON' && element.type === 'submit') {
-            const form = element.closest('form');
-            if (!form) {
-                console.error('Form not found for button:', element);
-                showNotification('Không tìm thấy form! Vui lòng thử lại.', 'error');
-                return false;
+                setTimeout(() => {
+                    notification.classList.add('translate-x-full');
+                    setTimeout(() => notification.remove(), 300);
+                }, 3000);
             }
-            url = form.action;
-            method = 'POST';
-            formData = new FormData(form);
-            button = element;
-        } else if (element.tagName === 'A') {
-            url = element.href;
-            method = 'DELETE';
-            formData = null;
-            button = element;
-        } else if (element.tagName === 'BUTTON' && element.classList.contains('add-to-cart')) {
-            url = '/add-cart';
-            method = 'POST';
-            formData = new FormData();
-            formData.append('product_id', element.dataset.productId);
-            formData.append('quantity', 1);
-            button = element;
-        } else {
-            console.error('Invalid element:', element);
-            showNotification('Hành động không hợp lệ!', 'error');
-            return false;
-        }
 
-        // Debug request
-        console.log('Sending AJAX request:', {
-            url,
-            method,
-            formData: formData ? Object.fromEntries(formData) : null
-        });
+            // Handle cart actions (add, update, delete)
+            function handleCartAction(element, event) {
+                event.preventDefault(); // Chặn hành động mặc định của form
 
-        // Show loading state
-        if (button && button.dataset.loadingText) {
-            button.disabled = true;
-            button.innerHTML = button.dataset.loadingText;
-        } else if (button) {
-            button.disabled = true;
-            button.innerHTML = '...';
-        }
+                let url, method, formData;
 
-        fetch(url, {
-                method: method,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json',
-                },
-                body: formData,
-            })
-            .then(response => {
-                console.log('Response status:', response.status);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Response data:', data);
-                if (data.success) {
-                    // Update cart content
-                    document.getElementById('cartContent').innerHTML = data.cartHtml;
-                    // Update cart count
-                    document.querySelector('.relative span').textContent = data.cartCount;
-                    // Reattach events
-                    attachCartEvents();
-                    // Show success notification
-                    showNotification(data.message || 'Cập nhật giỏ hàng thành công! 🛒');
-                    // Open cart overlay for add-to-cart
-                    if (element.classList.contains('add-to-cart')) {
-                        openCartOverlay();
+                // Handle add to cart
+                if (element.classList.contains('add-to-cart')) {
+                    url = element.closest('form').action; // Sử dụng action từ form
+                    method = 'POST';
+                    formData = new FormData(element.closest('form'));
+                    // Đảm bảo quantity mặc định là 1 nếu không có giá trị
+                    if (!formData.get('quantity')) {
+                        formData.set('quantity', 1); // Đặt số lượng mặc định là 1
                     }
+                }
+                // Handle update cart (increase/decrease)
+                else if (element.closest('form') && element.closest('form').classList.contains('cart-form')) {
+                    url = '{{ route("cart.update") }}'; // Route cố định
+                    method = 'POST';
+                    formData = new FormData(element.closest('form'));
+                }
+                // Handle delete from cart
+                else if (element.classList.contains('delete-btn')) {
+                    url = element.href;
+                    method = 'POST';
+                    formData = new FormData();
+                    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
                 } else {
-                    showNotification(data.message || 'Có lỗi xảy ra. Vui lòng thử lại!', 'error');
+                    return;
                 }
-            })
-            .catch(error => {
-                console.error('Fetch error:', error);
-                showNotification('Có lỗi xảy ra. Vui lòng thử lại!', 'error');
-            })
-            .finally(() => {
-                // Restore button state
-                if (button) {
-                    button.disabled = false;
-                    button.innerHTML = button.classList.contains('cart_quantity_up') ? '+' :
-                        button.classList.contains('cart_quantity_down') ? '−' :
-                        button.classList.contains('add-to-cart') ? 'Thêm vào giỏ' : 'X';
+
+                // Log for debugging
+                console.log('Action:', element.classList.contains('add-to-cart') ? 'Add' : element.classList.contains('delete-btn') ? 'Delete' : 'Update');
+                console.log('URL:', url);
+                console.log('FormData:', Object.fromEntries(formData));
+
+                // Disable button/link to prevent multiple clicks
+                element.disabled = true;
+                const originalText = element.textContent;
+                if (element.classList.contains('add-to-cart')) {
+                    element.textContent = element.dataset.loadingText || '...';
                 }
-            });
 
-        return false;
-    }
+                fetch(url, {
+                        method: method,
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        },
+                        body: formData,
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(error => {
+                                throw new Error(`HTTP error! Status: ${response.status}, Message: ${error.message || 'Unknown error'}`);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        element.disabled = false;
+                        if (element.classList.contains('add-to-cart')) {
+                            element.textContent = originalText;
+                        }
 
-    // Attach events to cart forms and delete buttons
-    function attachCartEvents() {
-        // Remove existing listeners to prevent duplicates
-        document.querySelectorAll('.cart-form').forEach(form => {
-            console.log('Attaching submit event to form:', form);
-            form.removeEventListener('submit', handleCartAction);
-            form.addEventListener('submit', (event) => handleCartAction(event, form));
-        });
-        document.querySelectorAll('.delete-btn').forEach(link => {
-            console.log('Attaching click event to delete button:', link);
-            link.removeEventListener('click', handleCartAction);
-            link.addEventListener('click', (event) => handleCartAction(event, link));
-        });
-        // Reattach close button event
-        const closeCartBtn = document.getElementById('closeCart');
-        if (closeCartBtn) {
-            closeCartBtn.removeEventListener('click', closeCartOverlay);
-            closeCartBtn.addEventListener('click', closeCartOverlay);
-        }
-    }
+                        if (data.success) {
+                            document.getElementById('cartContent').innerHTML = data.cartHtml;
+                            document.querySelector('.relative span').textContent = data.cartCount;
+                            attachCartEvents(); // Gắn lại sự kiện sau khi cập nhật
+                            showNotification(data.message || 'Cập nhật giỏ hàng thành công! 🛒');
+                            if (element.classList.contains('add-to-cart')) {
+                                openCartOverlay();
+                            }
+                        } else {
+                            showNotification(data.message || 'Có lỗi xảy ra. Vui lòng thử lại!', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        element.disabled = false;
+                        if (element.classList.contains('add-to-cart')) {
+                            element.textContent = originalText;
+                        }
+                        console.error('Fetch error:', error);
+                        showNotification('Có lỗi xảy ra: ' + error.message, 'error');
+                    });
+            }
 
-    // Attach add-to-cart events
-    function attachAddToCartEvents() {
-        document.querySelectorAll('.add-to-cart').forEach(button => {
-            console.log('Attaching click event to add-to-cart button:', button);
-            button.removeEventListener('click', handleCartAction);
-            button.addEventListener('click', (event) => handleCartAction(event, button));
-        });
-    }
+            // Attach cart events
+            // Attach cart events
+            function attachCartEvents() {
+                // Gắn sự kiện cho nút thêm vào giỏ
+                document.querySelectorAll('.add-to-cart').forEach(button => {
+                    button.removeEventListener('click', handleCartAction); // Xóa sự kiện cũ
+                    button.addEventListener('click', (e) => handleCartAction(button, e), {
+                        once: false
+                    }); // Gán sự kiện mới
+                });
 
-    // Attach all events on page load
-    document.addEventListener('DOMContentLoaded', () => {
-        attachCartEvents();
-        attachAddToCartEvents();
-    });
+                // Gắn sự kiện cho nút tăng/giảm số lượng
+                document.querySelectorAll('.cart-form button').forEach(button => {
+                    button.removeEventListener('click', handleCartAction);
+                    button.addEventListener('click', (e) => handleCartAction(button, e), {
+                        once: false
+                    });
+                });
 
-    // Smooth scrolling and active tab management
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
-            e.preventDefault();
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active', 'text-gray-900');
-                link.classList.add('text-gray-500');
-            });
-            this.classList.add('active', 'text-gray-900');
-            this.classList.remove('text-gray-500');
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
+                // Gắn sự kiện cho nút xóa
+                document.querySelectorAll('.delete-btn').forEach(link => {
+                    link.removeEventListener('click', handleCartAction);
+                    link.addEventListener('click', (e) => handleCartAction(link, e), {
+                        once: false
+                    });
                 });
             }
-        });
-    });
 
-    // Set active tab based on URL hash
-    window.addEventListener('DOMContentLoaded', () => {
-        const currentHash = window.location.hash || '#home';
-        const activeLink = document.querySelector(`.nav-link[href="${currentHash}"]`);
-        if (activeLink) {
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active', 'text-gray-900');
-                link.classList.add('text-gray-500');
-            });
-            activeLink.classList.add('active', 'text-gray-900');
-            activeLink.classList.remove('text-gray-500');
-        }
-    });
+            // Open cart overlay
+            function openCartOverlay() {
+                const overlay = document.getElementById('cartOverlay');
+                overlay.style.display = 'flex';
+                setTimeout(() => overlay.classList.add('opacity-100'), 10);
+                document.body.style.overflow = 'hidden';
+            }
 
-    // Contact form submission
-    document.querySelector('#contact form')?.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-        const name = formData.get('name');
-        showNotification(`Cảm ơn ${name}! Chúng tôi sẽ liên hệ với bạn sớm nhất có thể. 📞`);
-        this.reset();
-    });
+            // Close cart overlay
+            function closeCartOverlay() {
+                const overlay = document.getElementById('cartOverlay');
+                overlay.classList.remove('opacity-100');
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    document.body.style.overflow = '';
+                }, 300);
+            }
 
-    // Newsletter form submission
-    document.querySelector('section:nth-last-of-type(2) form')?.addEventListener('submit', function(e) {
-        e.preventDefault();
-        showNotification('Đăng ký thành công! Bạn sẽ nhận được tin tức mới nhất từ chúng tôi. 📧');
-        this.reset();
-    });
+            // Show login prompt
+            function showLoginPrompt() {
+                showNotification('Vui lòng đăng nhập để thực hiện hành động này!', 'error');
+                setTimeout(() => {
+                    window.location.href = '{{ route("login") }}';
+                }, 2000);
+            }
 
-    // Notification function
-    function showNotification(message, type = 'success') {
-        const existing = document.querySelector('.notification');
-        if (existing) existing.remove();
+            // Product scrolling
+            function initProductScrolling() {
+                const container = document.getElementById('productScrollContainer');
+                const scrollLeftBtn = document.getElementById('scrollLeft');
+                const scrollRightBtn = document.getElementById('scrollRight');
 
-        const notification = document.createElement('div');
-        notification.className = `notification fixed top-4 right-4 text-white px-6 py-4 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300 max-w-sm ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
-        notification.innerHTML = `
-        <div class="flex items-center">
-            <span class="flex-1">${message}</span>
-            <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        </div>
-    `;
+                if (!container || !scrollLeftBtn || !scrollRightBtn) return;
 
-        document.body.appendChild(notification);
-        setTimeout(() => notification.style.transform = 'translateX(0)', 100);
-        setTimeout(() => {
-            notification.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                if (notification.parentElement) notification.remove();
-            }, 300);
-        }, 5000);
-    }
+                const scrollAmount = 300;
 
-    // Navbar scroll effect
-    window.addEventListener('scroll', () => {
-        const nav = document.querySelector('nav');
-        if (window.scrollY > 100) {
-            nav.classList.add('bg-white/95', 'backdrop-blur-sm');
-        } else {
-            nav.classList.remove('bg-white/95', 'backdrop-blur-sm');
-        }
-    });
+                scrollLeftBtn.addEventListener('click', () => {
+                    container.scrollBy({
+                        left: -scrollAmount,
+                        behavior: 'smooth'
+                    });
+                });
 
-    // Lazy loading for images
-    if ('IntersectionObserver' in window) {
-        const imageObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    img.src = img.dataset.src;
-                    img.classList.remove('opacity-0');
-                    img.classList.add('opacity-100');
-                    observer.unobserve(img);
+                scrollRightBtn.addEventListener('click', () => {
+                    container.scrollBy({
+                        left: scrollAmount,
+                        behavior: 'smooth'
+                    });
+                });
+
+                let isDragging = false;
+                let startX, scrollLeft;
+
+                container.addEventListener('mousedown', (e) => {
+                    isDragging = true;
+                    container.classList.add('cursor-grabbing');
+                    startX = e.pageX - container.offsetLeft;
+                    scrollLeft = container.scrollLeft;
+                    e.preventDefault();
+                });
+
+                container.addEventListener('mouseleave', () => {
+                    isDragging = false;
+                    container.classList.remove('cursor-grabbing');
+                });
+
+                container.addEventListener('mouseup', () => {
+                    isDragging = false;
+                    container.classList.remove('cursor-grabbing');
+                });
+
+                container.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+                    e.preventDefault();
+                    const x = e.pageX - container.offsetLeft;
+                    const walk = (x - startX) * 2;
+                    container.scrollLeft = scrollLeft - walk;
+                });
+
+                container.addEventListener('touchstart', (e) => {
+                    isDragging = true;
+                    startX = e.touches[0].pageX - container.offsetLeft;
+                    scrollLeft = container.scrollLeft;
+                });
+
+                container.addEventListener('touchend', () => {
+                    isDragging = false;
+                });
+
+                container.addEventListener('touchmove', (e) => {
+                    if (!isDragging) return;
+                    const x = e.touches[0].pageX - container.offsetLeft;
+                    const walk = (x - startX) * 2;
+                    container.scrollLeft = scrollLeft - walk;
+                });
+            }
+
+            // Scroll to top
+            function initScrollToTop() {
+                const scrollToTopBtn = document.getElementById('scrollToTop');
+                if (!scrollToTopBtn) return;
+
+                window.addEventListener('scroll', () => {
+                    if (window.scrollY > 300) {
+                        scrollToTopBtn.classList.add('show');
+                    } else {
+                        scrollToTopBtn.classList.remove('show');
+                    }
+                });
+
+                scrollToTopBtn.addEventListener('click', () => {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                });
+            }
+
+            // Initialize
+            document.addEventListener('DOMContentLoaded', () => {
+                attachCartEvents();
+                initProductScrolling();
+                initScrollToTop();
+
+                // Close cart overlay button
+                const closeCartBtn = document.getElementById('closeCart');
+                if (closeCartBtn) {
+                    closeCartBtn.addEventListener('click', closeCartOverlay);
                 }
+
+                // Smooth scroll for anchor links
+                document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                    anchor.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const target = document.querySelector(this.getAttribute('href'));
+                        if (target) {
+                            target.scrollIntoView({
+                                behavior: 'smooth'
+                            });
+                        }
+                    });
+                });
             });
-        });
-        document.querySelectorAll('img[data-src]').forEach(img => imageObserver.observe(img));
-    }
-
-    // Horizontal drag scrolling for products
-    const productScrollContainer = document.getElementById('productScrollContainer');
-    let isDragging = false;
-    let startX, scrollLeft;
-
-    document.querySelectorAll('.draggable').forEach(item => {
-        item.addEventListener('mousedown', (e) => {
-            if (e.target.closest('a') || e.target.closest('button')) return;
-            isDragging = true;
-            startX = e.pageX - productScrollContainer.offsetLeft;
-            scrollLeft = productScrollContainer.scrollLeft;
-            productScrollContainer.style.cursor = 'grabbing';
-            e.preventDefault();
-        });
-    });
-
-    productScrollContainer.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        e.preventDefault();
-        const x = e.pageX - productScrollContainer.offsetLeft;
-        const walk = (x - startX) * 2;
-        productScrollContainer.scrollLeft = scrollLeft - walk;
-    });
-
-    document.addEventListener('mouseup', () => {
-        isDragging = false;
-        productScrollContainer.style.cursor = 'grab';
-    });
-
-    productScrollContainer.addEventListener('mouseleave', () => {
-        isDragging = false;
-        productScrollContainer.style.cursor = 'grab';
-    });
-
-    productScrollContainer.setAttribute('tabindex', '0');
-    productScrollContainer.addEventListener('keydown', (e) => {
-        const cardWidth = 280 + 8;
-        if (e.key === 'ArrowLeft') {
-            productScrollContainer.scrollBy({
-                left: -cardWidth,
-                behavior: 'smooth'
-            });
-        } else if (e.key === 'ArrowRight') {
-            productScrollContainer.scrollBy({
-                left: cardWidth,
-                behavior: 'smooth'
-            });
-        }
-    });
-
-    const scrollLeftBtn = document.getElementById('scrollLeft');
-    const scrollRightBtn = document.getElementById('scrollRight');
-    const cardWidth = 280 + 8;
-
-    scrollLeftBtn.addEventListener('click', () => {
-        productScrollContainer.scrollBy({
-            left: -cardWidth,
-            behavior: 'smooth'
-        });
-    });
-
-    scrollRightBtn.addEventListener('click', () => {
-        productScrollContainer.scrollBy({
-            left: cardWidth,
-            behavior: 'smooth'
-        });
-    });
-    // Floating contact icons functionality
-    const scrollToTopBtn = document.getElementById('scrollToTop');
-
-    // Show/hide scroll to top button
-    window.addEventListener('scroll', function() {
-        if (window.pageYOffset > 300) {
-            scrollToTopBtn.classList.add('show');
-        } else {
-            scrollToTopBtn.classList.remove('show');
-        }
-    });
-
-    // Scroll to top when clicked
-    scrollToTopBtn.addEventListener('click', function() {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-    });
-</script>
-</body>
-
+        </script>
+        </body>
 </html>
