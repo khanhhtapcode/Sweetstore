@@ -98,7 +98,6 @@
                 display: none;
             }
         }
-
         /* Floating Contact Icons */
         .floating-contact {
             position: fixed;

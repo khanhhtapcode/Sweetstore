@@ -25,6 +25,10 @@ class CategoryController extends Controller
      */
     public function create()
     {
+        // Nếu cần hiển thị danh sách categories cha thì uncomment dòng dưới
+        // $categories = Category::where('parent_id', null)->get();
+        // return view('admin.categories.create', compact('categories'));
+
         return view('admin.categories.create');
     }
 
@@ -75,7 +79,9 @@ class CategoryController extends Controller
      */
     public function edit(Category $category)
     {
-        return view('admin.categories.edit', compact('category'));
+        // Nếu có parent categories thì pass vào
+        $categories = Category::where('id', '!=', $category->id)->get();
+        return view('admin.categories.edit', compact('category', 'categories'));
     }
 
     /**
