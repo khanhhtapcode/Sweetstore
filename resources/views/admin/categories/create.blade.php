@@ -2,130 +2,155 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Quản Lý Danh Mục') }}
+                {{ __('Thêm Danh Mục Mới') }}
             </h2>
-            <a href="{{ route('admin.categories.create') }}"
-               class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                Thêm Danh Mục Mới
+            <a href="{{ route('admin.categories.index') }}"
+               class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                Quay Lại
             </a>
         </div>
     </x-slot>
 
     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-        <div class="p-6 text-gray-900">
-            @if($categories->count() > 0)
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                #
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Tên Danh Mục
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Mô Tả
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Số Sản Phẩm
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Trạng Thái
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Ngày Tạo
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Thao Tác
-                            </th>
-                        </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($categories as $category)
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    {{ $category->id }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        @if($category->image_url)
-                                            <div class="flex-shrink-0 h-10 w-10">
-                                                <img class="h-10 w-10 rounded-full object-cover" src="{{ $category->image_url }}" alt="{{ $category->name }}">
-                                            </div>
-                                        @endif
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">
-                                                {{ $category->name }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-500">
-                                    {{ Str::limit($category->description, 50) }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                            {{ $category->products_count }} sản phẩm
-                                        </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                            {{ $category->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                            {{ $category->is_active ? 'Hoạt động' : 'Tạm dừng' }}
-                                        </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $category->created_at->format('d/m/Y') }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <div class="flex space-x-2">
-                                        <a href="{{ route('admin.categories.show', $category) }}"
-                                           class="text-blue-600 hover:text-blue-900">Xem</a>
-                                        <a href="{{ route('admin.categories.edit', $category) }}"
-                                           class="text-indigo-600 hover:text-indigo-900">Sửa</a>
-                                        <form action="{{ route('admin.categories.destroy', $category) }}"
-                                              method="POST"
-                                              class="inline"
-                                              onsubmit="return confirm('Bạn có chắc chắn muốn xóa danh mục này?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-900">
-                                                Xóa
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
+        <div class="p-6">
+            @if ($errors->any())
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                    <ul class="list-disc list-inside">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
                         @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pagination -->
-                @if($categories->hasPages())
-                    <div class="mt-4">
-                        {{ $categories->links() }}
-                    </div>
-                @endif
-            @else
-                <div class="text-center py-8">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                    </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900">Chưa có danh mục nào</h3>
-                    <p class="mt-1 text-sm text-gray-500">Bắt đầu bằng việc tạo danh mục đầu tiên.</p>
-                    <div class="mt-6">
-                        <a href="{{ route('admin.categories.create') }}"
-                           class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            Thêm Danh Mục
-                        </a>
-                    </div>
+                    </ul>
                 </div>
             @endif
+
+            <form action="{{ route('admin.categories.store') }}" method="POST" class="space-y-6">
+                @csrf
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Left Column -->
+                    <div class="space-y-4">
+                        <!-- Category Name -->
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700">
+                                Tên Danh Mục <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text"
+                                   id="name"
+                                   name="name"
+                                   value="{{ old('name') }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('name') border-red-300 @enderror"
+                                   required>
+                            @error('name')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700">
+                                Mô Tả
+                            </label>
+                            <textarea id="description"
+                                      name="description"
+                                      rows="4"
+                                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('description') border-red-300 @enderror"
+                                      placeholder="Nhập mô tả cho danh mục...">{{ old('description') }}</textarea>
+                            @error('description')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="space-y-4">
+                        <!-- Image URL -->
+                        <div>
+                            <label for="image_url" class="block text-sm font-medium text-gray-700">
+                                URL Hình Ảnh
+                            </label>
+                            <input type="url"
+                                   id="image_url"
+                                   name="image_url"
+                                   value="{{ old('image_url') }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('image_url') border-red-300 @enderror"
+                                   placeholder="https://example.com/image.jpg">
+                            @error('image_url')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Image Preview -->
+                        <div id="image-preview" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Xem Trước Hình Ảnh
+                            </label>
+                            <img id="preview-img" src="" alt="Preview" class="w-32 h-32 object-cover rounded-lg border">
+                        </div>
+
+                        <!-- Active Status -->
+                        <div>
+                            <div class="flex items-center">
+                                <input type="checkbox"
+                                       id="is_active"
+                                       name="is_active"
+                                       value="1"
+                                       {{ old('is_active', true) ? 'checked' : '' }}
+                                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                <label for="is_active" class="ml-2 block text-sm text-gray-900">
+                                    Kích hoạt danh mục
+                                </label>
+                            </div>
+                            <p class="mt-1 text-sm text-gray-500">
+                                Danh mục sẽ hiển thị trên website khi được kích hoạt
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                    <a href="{{ route('admin.categories.index') }}"
+                       class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+                        Hủy
+                    </a>
+                    <button type="submit"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        Tạo Danh Mục
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+
+    @push('scripts')
+        <script>
+            // Preview image when URL is entered
+            document.getElementById('image_url').addEventListener('input', function() {
+                const url = this.value;
+                const preview = document.getElementById('image-preview');
+                const img = document.getElementById('preview-img');
+
+                if (url && isValidUrl(url)) {
+                    img.src = url;
+                    img.onload = function() {
+                        preview.classList.remove('hidden');
+                    };
+                    img.onerror = function() {
+                        preview.classList.add('hidden');
+                    };
+                } else {
+                    preview.classList.add('hidden');
+                }
+            });
+
+            function isValidUrl(string) {
+                try {
+                    new URL(string);
+                    return true;
+                } catch (_) {
+                    return false;
+                }
+            }
+        </script>
+    @endpush
 </x-admin-layout>
