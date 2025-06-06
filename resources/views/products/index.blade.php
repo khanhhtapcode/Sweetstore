@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -129,6 +130,7 @@
         }
     </style>
 </head>
+
 <body class="antialiased bg-gray-50">
     <!-- Navigation -->
     <nav class="bg-white shadow-lg sticky top-0 z-50">
@@ -194,10 +196,10 @@
     <div id="cartOverlay">
         <div id="cartContent">
             @php
-                $cartItems = auth()->check() ? \App\Models\CartItem::where('user_id', auth()->id())->get() : collect([]);
-                $totalPrice = $cartItems->sum(function ($item) {
-                    return $item->quantity * $item->price;
-                });
+            $cartItems = auth()->check() ? \App\Models\CartItem::where('user_id', auth()->id())->get() : collect([]);
+            $totalPrice = $cartItems->sum(function ($item) {
+            return $item->quantity * $item->price;
+            });
             @endphp
             @include('pages.cart.overlay', ['cartItems' => $cartItems, 'totalPrice' => $totalPrice])
         </div>
@@ -339,130 +341,130 @@
                                     </span>
                                     @endif
                                     @if($product->stock_quantity <= 5 && $product->stock_quantity > 0)
-                                    <span class="bg-orange-400 text-orange-900 text-xs font-bold px-2 py-1 rounded-full shadow-sm">
-                                        🔥 Sắp hết
-                                    </span>
-                                    @endif
+                                        <span class="bg-orange-400 text-orange-900 text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+                                            🔥 Sắp hết
+                                        </span>
+                                        @endif
                                 </div>
 
                                 @if($product->stock_quantity <= 0)
-                                <div class="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
+                                    <div class="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
                                     <div class="text-white font-bold text-center">
                                         <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364L18.364 5.636"></path>
                                         </svg>
                                         <span class="text-lg">Hết hàng</span>
                                     </div>
-                                </div>
-                                @endif
-
-                                <!-- Quick View -->
-                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition duration-300 flex items-center justify-center">
-                                    <button class="bg-white text-gray-900 px-4 py-2 rounded-lg opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition duration-300 font-medium shadow-lg">
-                                        Xem Chi Tiết
-                                    </button>
-                                </div>
                             </div>
-                        </a>
+                            @endif
 
-                        <div class="p-5">
-                            <div class="flex items-center justify-between mb-3">
-                                <span class="text-xs font-medium text-pink-600 bg-pink-50 px-3 py-1 rounded-full">
-                                    {{ $product->category->name ?? 'Khác' }}
-                                </span>
-                                @if($product->stock_quantity > 0)
-                                <span class="text-xs text-green-500 bg-green-50 px-2 py-1 rounded">
-                                    Còn {{ $product->stock_quantity }}
-                                </span>
-                                @else
-                                <span class="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">Hết hàng</span>
+                            <!-- Quick View -->
+                            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition duration-300 flex items-center justify-center">
+                                <button class="bg-white text-gray-900 px-4 py-2 rounded-lg opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition duration-300 font-medium shadow-lg">
+                                    Xem Chi Tiết
+                                </button>
+                            </div>
+                    </div>
+                    </a>
+
+                    <div class="p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-medium text-pink-600 bg-pink-50 px-3 py-1 rounded-full">
+                                {{ $product->category->name ?? 'Khác' }}
+                            </span>
+                            @if($product->stock_quantity > 0)
+                            <span class="text-xs text-green-500 bg-green-50 px-2 py-1 rounded">
+                                Còn {{ $product->stock_quantity }}
+                            </span>
+                            @else
+                            <span class="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">Hết hàng</span>
+                            @endif
+                        </div>
+
+                        <h3 class="font-semibold text-gray-900 mb-2 line-clamp-1">
+                            <a href="{{ route('products.show', $product) }}" class="hover:text-pink-600 transition duration-200">
+                                {{ $product->name }}
+                            </a>
+                        </h3>
+
+                        <p class="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
+                            {{ Str::limit($product->description, 80) }}
+                        </p>
+
+                        <div class="flex items-center justify-between">
+                            <div class="flex flex-col">
+                                <span class="text-2xl font-bold text-pink-600">{{ $product->formatted_price }}</span>
+                                @if($product->category)
+                                <span class="text-xs text-gray-500">{{ $product->category->name }}</span>
                                 @endif
                             </div>
-
-                            <h3 class="font-semibold text-gray-900 mb-2 line-clamp-1">
-                                <a href="{{ route('products.show', $product) }}" class="hover:text-pink-600 transition duration-200">
-                                    {{ $product->name }}
-                                </a>
-                            </h3>
-
-                            <p class="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
-                                {{ Str::limit($product->description, 80) }}
-                            </p>
-
-                            <div class="flex items-center justify-between">
-                                <div class="flex flex-col">
-                                    <span class="text-2xl font-bold text-pink-600">{{ $product->formatted_price }}</span>
-                                    @if($product->category)
-                                    <span class="text-xs text-gray-500">{{ $product->category->name }}</span>
-                                    @endif
-                                </div>
-                                @if($product->stock_quantity > 0)
-                                @if(auth()->check())
-                                <form action="{{ route('cart.add') }}" method="POST" class="cart-form" data-product-id="{{ $product->id }}">
-                                    @csrf
-                                    <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                    <input type="hidden" name="quantity" value="1">
-                                    <button type="submit" class="add-to-cart bg-gradient-to-r from-pink-600 to-purple-600 text-white px-5 py-2.5 rounded-lg hover:from-pink-700 hover:to-purple-700 transition duration-300 font-medium transform hover:scale-105 shadow-md" data-loading-text="...">
-                                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17M17 13v4a2 2 0 01-2 2H9a2 2 0 01-2-2v-4m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01"></path>
-                                        </svg>
-                                        Thêm
-                                    </button>
-                                </form>
-                                @else
-                                <button onclick="showLoginPrompt()" class="bg-gradient-to-r from-pink-600 to-purple-600 text-white px-5 py-2.5 rounded-lg hover:from-pink-700 hover:to-purple-700 transition duration-300 font-medium transform hover:scale-105 shadow-md">
+                            @if($product->stock_quantity > 0)
+                            @if(auth()->check())
+                            <form action="{{ route('cart.add') }}" method="POST" class="cart-form" data-product-id="{{ $product->id }}">
+                                @csrf
+                                <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="add-to-cart bg-gradient-to-r from-pink-600 to-purple-600 text-white px-5 py-2.5 rounded-lg hover:from-pink-700 hover:to-purple-700 transition duration-300 font-medium transform hover:scale-105 shadow-md" data-loading-text="...">
                                     <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17M17 13v4a2 2 0 01-2 2H9a2 2 0 01-2-2v-4m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01"></path>
                                     </svg>
                                     Thêm
                                 </button>
-                                @endif
-                                @else
-                                <button class="bg-gray-300 text-gray-500 px-5 py-2.5 rounded-lg cursor-not-allowed font-medium" disabled>
-                                    Hết hàng
-                                </button>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-
-                <!-- Pagination -->
-                @if($products->hasPages())
-                <div class="flex justify-center">
-                    <div class="bg-white rounded-lg shadow-sm p-4">
-                        {{ $products->withQueryString()->links() }}
-                    </div>
-                </div>
-                @endif
-                @else
-                <!-- No Products -->
-                <div class="bg-white rounded-xl shadow-sm p-12 text-center">
-                    <div class="max-w-md mx-auto">
-                        <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10l-8-4m8 4v10M4 7v10l8 4" />
-                        </svg>
-                        <h3 class="mt-2 text-xl font-medium text-gray-900">Không tìm thấy sản phẩm nào</h3>
-                        <p class="mt-2 text-gray-500">Thử thay đổi bộ lọc hoặc tìm kiếm với từ khóa khác để tìm sản phẩm phù hợp.</p>
-                        <div class="mt-6 space-y-3">
-                            <a href="{{ route('products.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 transition duration-300">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </form>
+                            @else
+                            <button onclick="showLoginPrompt()" class="bg-gradient-to-r from-pink-600 to-purple-600 text-white px-5 py-2.5 rounded-lg hover:from-pink-700 hover:to-purple-700 transition duration-300 font-medium transform hover:scale-105 shadow-md">
+                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17M17 13v4a2 2 0 01-2 2H9a2 2 0 01-2-2v-4m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01"></path>
                                 </svg>
-                                Xem tất cả sản phẩm
-                            </a>
+                                Thêm
+                            </button>
+                            @endif
+                            @else
+                            <button class="bg-gray-300 text-gray-500 px-5 py-2.5 rounded-lg cursor-not-allowed font-medium" disabled>
+                                Hết hàng
+                            </button>
+                            @endif
                         </div>
                     </div>
                 </div>
-                @endif
+                @endforeach
             </div>
+
+            <!-- Pagination -->
+            @if($products->hasPages())
+            <div class="flex justify-center">
+                <div class="bg-white rounded-lg shadow-sm p-4">
+                    {{ $products->withQueryString()->links() }}
+                </div>
+            </div>
+            @endif
+            @else
+            <!-- No Products -->
+            <div class="bg-white rounded-xl shadow-sm p-12 text-center">
+                <div class="max-w-md mx-auto">
+                    <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10l-8-4m8 4v10M4 7v10l8 4" />
+                    </svg>
+                    <h3 class="mt-2 text-xl font-medium text-gray-900">Không tìm thấy sản phẩm nào</h3>
+                    <p class="mt-2 text-gray-500">Thử thay đổi bộ lọc hoặc tìm kiếm với từ khóa khác để tìm sản phẩm phù hợp.</p>
+                    <div class="mt-6 space-y-3">
+                        <a href="{{ route('products.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 transition duration-300">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Xem tất cả sản phẩm
+                        </a>
+                    </div>
+                </div>
+            </div>
+            @endif
         </div>
+    </div>
     </div>
 
     <!-- JavaScript -->
     <script>
-        // Show notification
+        // --- Show notification ---
         function showNotification(message, type = 'success') {
             const notification = document.createElement('div');
             notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg text-white z-50 transition-all duration-300 transform translate-x-full ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
@@ -476,13 +478,16 @@
             }, 3000);
         }
 
-        // Handle cart actions
-        function handleCartAction(element, event) {
+        // --- Handle cart action with debounce prevention ---
+        let isCartActionRunning = false;
+
+        async function handleCartAction(element, event) {
             event.preventDefault();
+            if (isCartActionRunning) return;
+            isCartActionRunning = true;
 
             let url, method, formData;
 
-            // Add to cart
             if (element.classList.contains('add-to-cart')) {
                 const form = element.closest('form');
                 if (!form) return showNotification('Không tìm thấy form!', 'error');
@@ -490,15 +495,11 @@
                 method = 'POST';
                 formData = new FormData(form);
                 if (!formData.get('quantity')) formData.set('quantity', 1);
-            }
-            // Update cart (increase/decrease)
-            else if (element.closest('form') && element.closest('form').classList.contains('cart-form')) {
+            } else if (element.closest('form')?.classList.contains('cart-form')) {
                 url = '{{ route("cart.update") }}';
                 method = 'POST';
                 formData = new FormData(element.closest('form'));
-            }
-            // Delete from cart
-            else if (element.classList.contains('delete-btn')) {
+            } else if (element.classList.contains('delete-btn')) {
                 const productId = element.getAttribute('data-product-id');
                 if (!productId) return showNotification('Không tìm thấy ID sản phẩm!', 'error');
                 url = '{{ route("cart.delete", ["productId" => ":id"]) }}'.replace(':id', productId);
@@ -513,64 +514,58 @@
             const originalText = element.textContent;
             if (element.classList.contains('add-to-cart')) element.textContent = element.dataset.loadingText || '...';
 
-            fetch(url, {
-                method: method,
-                headers: {
-                    'Accept': 'application/json',
-                    ...(method === 'POST' && { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }),
-                },
-                body: method === 'POST' ? formData : undefined,
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(error => { throw new Error(error.message || 'Unknown error'); });
-                }
-                return response.json();
-            })
-            .then(data => {
-                element.disabled = false;
-                if (element.classList.contains('add-to-cart')) element.textContent = originalText;
+            try {
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: formData
+                });
 
-                if (data.success) {
-                    document.getElementById('cartContent').innerHTML = data.cartHtml;
-                    document.querySelector('.cart-count').textContent = data.cartCount;
-                    attachCartEvents();
-                    showNotification(data.message || 'Cập nhật giỏ hàng thành công! 🛒');
-                    if (element.classList.contains('add-to-cart')) openCartOverlay();
-                } else {
-                    showNotification(data.message || 'Có lỗi xảy ra!', 'error');
-                }
-            })
-            .catch(error => {
-                element.disabled = false;
-                if (element.classList.contains('add-to-cart')) element.textContent = originalText;
+                const data = await response.json();
+
+                if (!response.ok) throw new Error(data.message || 'Unknown error');
+
+                document.getElementById('cartContent').innerHTML = data.cartHtml;
+                document.querySelector('.relative span').textContent = data.cartCount;
+                attachCartEvents();
+                showNotification(data.message || 'Cập nhật giỏ hàng thành công! 🛒');
+                if (element.classList.contains('add-to-cart')) openCartOverlay();
+            } catch (error) {
                 console.error('Fetch error:', error);
                 showNotification('Có lỗi xảy ra: ' + error.message, 'error');
-            });
+            } finally {
+                isCartActionRunning = false;
+                element.disabled = false;
+                if (element.classList.contains('add-to-cart')) element.textContent = originalText;
+            }
         }
 
-        // Attach cart events
+        // --- Attach cart events ---
         function attachCartEvents() {
+            document.querySelectorAll('.add-to-cart, .cart-form button, .delete-btn').forEach(button => {
+                button.replaceWith(button.cloneNode(true)); // Remove old listeners
+            });
+
             document.querySelectorAll('.add-to-cart').forEach(button => {
-                button.removeEventListener('click', handleCartAction);
-                button.addEventListener('click', (e) => handleCartAction(button, e));
+                button.addEventListener('click', e => handleCartAction(button, e));
             });
 
             document.querySelectorAll('.cart-form button').forEach(button => {
-                button.removeEventListener('click', handleCartAction);
-                button.addEventListener('click', (e) => handleCartAction(button, e));
+                button.addEventListener('click', e => handleCartAction(button, e));
             });
 
             document.querySelectorAll('.delete-btn').forEach(link => {
-                link.removeEventListener('click', handleCartAction);
-                link.addEventListener('click', (e) => handleCartAction(link, e));
+                link.addEventListener('click', e => handleCartAction(link, e));
             });
 
             const closeCartBtn = document.getElementById('closeCart');
             if (closeCartBtn) closeCartBtn.onclick = closeCartOverlay;
         }
 
-        // Open cart overlay
+        // --- Overlay ---
         function openCartOverlay() {
             const overlay = document.getElementById('cartOverlay');
             overlay.style.display = 'flex';
@@ -578,7 +573,6 @@
             document.body.style.overflow = 'hidden';
         }
 
-        // Close cart overlay
         function closeCartOverlay() {
             const overlay = document.getElementById('cartOverlay');
             overlay.classList.remove('opacity-100');
@@ -588,13 +582,12 @@
             }, 300);
         }
 
-        // Show login prompt
         function showLoginPrompt() {
             showNotification('Vui lòng đăng nhập để thực hiện hành động này!', 'error');
             setTimeout(() => window.location.href = '{{ route("login") }}', 2000);
         }
 
-        // Auto-submit filter form
+        // --- Auto submit filters ---
         document.querySelectorAll('input[name="category"]').forEach(input => {
             input.addEventListener('change', () => input.closest('form').submit());
         });
@@ -603,37 +596,34 @@
             this.closest('form').submit();
         });
 
-        // Smooth scrolling for anchor links
+        // --- Smooth scroll ---
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
+                if (target) target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
             });
         });
 
-        // Attach events on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            attachCartEvents();
-        });
+        // --- On load ---
+        document.addEventListener('DOMContentLoaded', attachCartEvents);
 
-        // Loading animation for form submit
+        // --- Loading animation for submit ---
         document.querySelector('form')?.addEventListener('submit', function() {
             const submitBtn = this.querySelector('button[type="submit"]');
             if (submitBtn) {
-                const originalText = submitBtn.innerHTML;
                 submitBtn.innerHTML = `
-                    <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Đang tải...
-                `;
+            <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg> Đang tải...`;
                 submitBtn.disabled = true;
             }
         });
     </script>
 </body>
+
 </html>
