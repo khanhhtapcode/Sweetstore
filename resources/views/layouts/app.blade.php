@@ -11,12 +11,20 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100">
-            @include('layouts.navigation')
+    <!-- Bootstrap, FontAwesome, and Custom CSS -->
+    <link rel="stylesheet" href="{{ asset('frontend/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('frontend/css/font-awesome.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('frontend/css/main.css') }}">
+
+    <!-- Vite Scripts -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    @stack('styles')
+</head>
+
+<body class="font-sans antialiased">
+    <div class="min-h-screen bg-gray-100">
+        @include('layouts.navigation')
 
             <!-- Page Heading -->
             @isset($header)
@@ -27,10 +35,16 @@
                 </header>
             @endisset
 
-            <!-- Page Content -->
-            <main>
-                {{ $slot }}
-            </main>
-        </div>
-    </body>
+        <main>
+            {{ $slot }}
+        </main>
+    </div>
+
+    <!-- jQuery and Bootstrap JS -->
+    <script src="{{ asset('frontend/js/jquery.js') }}"></script>
+    <script src="{{ asset('frontend/js/bootstrap.min.js') }}"></script>
+
+    @stack('scripts')
+</body>
+
 </html>

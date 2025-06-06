@@ -45,6 +45,12 @@ class Product extends Model
             ->withTimestamps();
     }
 
+    public function ratings()
+{
+    return $this->hasMany(\App\Models\Rating::class);
+}
+
+
     /**
      * Scope cho sản phẩm đang hoạt động
      */
