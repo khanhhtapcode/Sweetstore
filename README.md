@@ -68,6 +68,7 @@ php artisan db:seed --class=AdminUserSeeder
 ### 6. 📦 Cài đặt Node Modules
 ```bash
 npm install
+npm install chart.js
 ```
 ### 7. ⚒️ Biên dịch frontend
 Phát triển:
