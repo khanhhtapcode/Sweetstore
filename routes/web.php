@@ -12,6 +12,7 @@ use App\Http\Middleware\RedirectAdminMiddleware;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\RatingReplyController;
+use App\Http\Controllers\ChatbotController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -80,5 +81,5 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
     Route::post('users/{user}/change-role', [UserController::class, 'changeRole'])->name('users.change-role');
 });
-
+Route::post('/chatbot/chat', [ChatbotController::class, 'chat'])->name('chatbot.chat');
 require __DIR__ . '/auth.php';
