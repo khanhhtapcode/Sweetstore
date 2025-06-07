@@ -96,7 +96,7 @@ class Driver extends Model
     // Accessor để format rating
     public function getFormattedRatingAttribute()
     {
-        return number_format($this->rating, 1) . '/5.0';
+        return number_format($this->rating ?? 0, 1) . '/5.0';
     }
 
     // Accessor để kiểm tra bằng lái hết hạn
@@ -108,7 +108,9 @@ class Driver extends Model
     // Accessor để kiểm tra bằng lái sắp hết hạn (trong 30 ngày)
     public function getIsLicenseExpiringSoonAttribute()
     {
-        return $this->license_expiry && $this->license_expiry->diffInDays(now()) <= 30 && !$this->is_license_expired;
+        return $this->license_expiry &&
+            $this->license_expiry->diffInDays(now()) <= 30 &&
+            !$this->is_license_expired;
     }
 
     // Accessor để lấy số ngày đến hạn bằng lái
@@ -118,6 +120,12 @@ class Driver extends Model
 
         $days = $this->license_expiry->diffInDays(now());
         return $this->license_expiry->isPast() ? -$days : $days;
+    }
+
+    // Accessor để lấy số đơn hàng đang giao
+    public function getCurrentOrdersCountAttribute()
+    {
+        return $this->currentOrders()->count();
     }
 
     // Scope để lấy tài xế đang hoạt động
@@ -146,6 +154,14 @@ class Driver extends Model
         static::creating(function ($driver) {
             if (!$driver->driver_code) {
                 $driver->driver_code = self::generateDriverCode();
+            }
+
+            // Set default values
+            if (is_null($driver->rating)) {
+                $driver->rating = 0;
+            }
+            if (is_null($driver->total_deliveries)) {
+                $driver->total_deliveries = 0;
             }
         });
     }
@@ -200,11 +216,5 @@ class Driver extends Model
         return $this->status === self::STATUS_ACTIVE &&
             $this->currentOrders()->count() < 3 && // Giới hạn tối đa 3 đơn cùng lúc
             !$this->is_license_expired;
-    }
-
-    // Lấy số đơn hàng đang giao
-    public function getCurrentOrdersCountAttribute()
-    {
-        return $this->currentOrders()->count();
     }
 }

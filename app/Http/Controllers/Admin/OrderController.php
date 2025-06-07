@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Driver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -16,11 +17,16 @@ class OrderController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Order::with(['user', 'orderItems.product']);
+        $query = Order::with(['user', 'orderItems.product', 'driver']);
 
         // Filter by status
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        }
+
+        // Filter by driver
+        if ($request->filled('driver_id')) {
+            $query->where('driver_id', $request->driver_id);
         }
 
         // Filter by payment method
@@ -51,7 +57,10 @@ class OrderController extends Controller
 
         $orders = $query->paginate(15)->withQueryString();
 
-        return view('admin.orders.index', compact('orders'));
+        // Get drivers for filter dropdown
+        $drivers = Driver::select('id', 'name', 'driver_code')->get();
+
+        return view('admin.orders.index', compact('orders', 'drivers'));
     }
 
     /**
@@ -60,7 +69,8 @@ class OrderController extends Controller
     public function create()
     {
         $products = Product::active()->orderBy('name')->get();
-        return view('admin.orders.create', compact('products'));
+        $drivers = Driver::available()->get();
+        return view('admin.orders.create', compact('products', 'drivers'));
     }
 
     /**
@@ -80,6 +90,7 @@ class OrderController extends Controller
             'total_amount' => 'required|numeric|min:0',
             'status' => 'required|in:' . implode(',', array_keys(Order::getStatuses())),
             'payment_method' => 'nullable|in:cod,bank_transfer,credit_card',
+            'driver_id' => 'nullable|exists:drivers,id',
             'notes' => 'nullable|string|max:1000'
         ], [
             'customer_name.required' => 'Tên khách hàng là bắt buộc.',
@@ -105,10 +116,13 @@ class OrderController extends Controller
                 'total_amount' => $request->total_amount,
                 'status' => $request->status,
                 'payment_method' => $request->payment_method ?? 'cod',
+                'driver_id' => $request->driver_id,
                 'notes' => $request->notes
             ]);
 
             // Tạo order items và cập nhật tồn kho
+            $totalWeight = 0;
+            $totalVolume = 0;
             foreach ($request->products as $productData) {
                 if (empty($productData['product_id']) || empty($productData['quantity'])) {
                     continue;
@@ -132,9 +146,27 @@ class OrderController extends Controller
                     'price' => $productData['price']
                 ]);
 
+                // Tính toán trọng lượng và thể tích (giả định)
+                $totalWeight += ($product->weight ?? 0.5) * $productData['quantity']; // kg
+                $totalVolume += ($product->volume ?? 0.01) * $productData['quantity']; // m³
+
                 // Trừ tồn kho nếu đơn hàng không phải pending hoặc cancelled
                 if (!in_array($order->status, ['pending', 'cancelled'])) {
                     $product->decrement('stock_quantity', $productData['quantity']);
+                }
+            }
+
+            // Tự động gán tài xế nếu đơn hàng sẵn sàng giao và chưa có tài xế
+            if ($order->status === 'ready' && !$order->driver_id) {
+                $suggestedDriver = $this->findBestDriver($totalWeight, $totalVolume, $order->customer_address);
+                if ($suggestedDriver) {
+                    $order->assignDriver($suggestedDriver);
+                }
+            } elseif ($order->driver_id && in_array($order->status, ['ready', 'assigned'])) {
+                // Nếu đã chọn tài xế, gán luôn
+                $driver = Driver::find($order->driver_id);
+                if ($driver && $driver->canTakeNewOrder()) {
+                    $order->assignDriver($driver);
                 }
             }
 
@@ -155,8 +187,9 @@ class OrderController extends Controller
      */
     public function show(Order $order)
     {
-        $order->load(['user', 'orderItems.product.category']);
-        return view('admin.orders.show', compact('order'));
+        $order->load(['user', 'orderItems.product.category', 'driver']);
+        $availableDrivers = Driver::available()->get();
+        return view('admin.orders.show', compact('order', 'availableDrivers'));
     }
 
     /**
@@ -165,8 +198,9 @@ class OrderController extends Controller
     public function edit(Order $order)
     {
         $products = Product::orderBy('name')->get();
+        $drivers = Driver::available()->get();
         $order->load('orderItems.product');
-        return view('admin.orders.edit', compact('order', 'products'));
+        return view('admin.orders.edit', compact('order', 'products', 'drivers'));
     }
 
     /**
@@ -186,12 +220,14 @@ class OrderController extends Controller
             'total_amount' => 'required|numeric|min:0',
             'status' => 'required|in:' . implode(',', array_keys(Order::getStatuses())),
             'payment_method' => 'nullable|in:cod,bank_transfer,credit_card',
+            'driver_id' => 'nullable|exists:drivers,id',
             'notes' => 'nullable|string|max:1000'
         ]);
 
         DB::beginTransaction();
         try {
             $oldStatus = $order->status;
+            $oldDriverId = $order->driver_id;
 
             // Hoàn lại tồn kho của order items cũ (trừ khi là pending hoặc cancelled)
             if (!in_array($oldStatus, ['pending', 'cancelled'])) {
@@ -215,6 +251,7 @@ class OrderController extends Controller
                 'total_amount' => $request->total_amount,
                 'status' => $request->status,
                 'payment_method' => $request->payment_method ?? 'cod',
+                'driver_id' => $request->driver_id,
                 'notes' => $request->notes
             ]);
 
@@ -248,6 +285,25 @@ class OrderController extends Controller
                 }
             }
 
+            // Xử lý thay đổi tài xế
+            if ($oldDriverId != $request->driver_id) {
+                // Hủy gán tài xế cũ
+                if ($oldDriverId) {
+                    $oldDriver = Driver::find($oldDriverId);
+                    if ($oldDriver && $oldDriver->currentOrders()->count() <= 1) {
+                        $oldDriver->markAsAvailable();
+                    }
+                }
+
+                // Gán tài xế mới
+                if ($request->driver_id && in_array($request->status, ['ready', 'assigned'])) {
+                    $newDriver = Driver::find($request->driver_id);
+                    if ($newDriver && $newDriver->canTakeNewOrder()) {
+                        $order->assignDriver($newDriver);
+                    }
+                }
+            }
+
             DB::commit();
             return redirect()->route('admin.orders.index')
                 ->with('success', 'Đơn hàng đã được cập nhật thành công!');
@@ -276,6 +332,14 @@ class OrderController extends Controller
                     if ($product) {
                         $product->increment('stock_quantity', $item->quantity);
                     }
+                }
+            }
+
+            // Cập nhật trạng thái tài xế nếu có
+            if ($order->driver_id) {
+                $driver = Driver::find($order->driver_id);
+                if ($driver && $driver->currentOrders()->count() <= 1) {
+                    $driver->markAsAvailable();
                 }
             }
 
@@ -348,6 +412,38 @@ class OrderController extends Controller
                 }
             }
 
+            // Tự động gán tài xế khi chuyển sang "ready"
+            if ($newStatus === 'ready' && !$order->driver_id) {
+                $totalWeight = $order->orderItems->sum(function($item) {
+                    return ($item->product->weight ?? 0.5) * $item->quantity;
+                });
+                $totalVolume = $order->orderItems->sum(function($item) {
+                    return ($item->product->volume ?? 0.01) * $item->quantity;
+                });
+
+                $suggestedDriver = $this->findBestDriver($totalWeight, $totalVolume, $order->customer_address);
+                if ($suggestedDriver) {
+                    $order->driver_id = $suggestedDriver->id;
+                    $order->assignDriver($suggestedDriver);
+                }
+            }
+
+            // Cập nhật trạng thái tài xế khi đơn hàng hoàn thành hoặc hủy
+            if ($order->driver_id && in_array($newStatus, ['delivered', 'cancelled'])) {
+                $driver = Driver::find($order->driver_id);
+                if ($driver) {
+                    if ($newStatus === 'delivered') {
+                        $driver->increment('total_deliveries');
+                        $driver->updateRating();
+                    }
+
+                    // Kiểm tra nếu không còn đơn nào đang giao
+                    if ($driver->currentOrders()->where('id', '!=', $order->id)->count() === 0) {
+                        $driver->markAsAvailable();
+                    }
+                }
+            }
+
             $order->update(['status' => $newStatus]);
 
             DB::commit();
@@ -366,26 +462,203 @@ class OrderController extends Controller
     }
 
     /**
-     * Thống kê đơn hàng theo trạng thái
+     * Assign driver to order
      */
-    public function statistics()
+    public function assignDriver(Request $request, Order $order)
     {
-        $stats = [
-            'total' => Order::count(),
-            'pending' => Order::where('status', 'pending')->count(),
-            'confirmed' => Order::where('status', 'confirmed')->count(),
-            'preparing' => Order::where('status', 'preparing')->count(),
-            'ready' => Order::where('status', 'ready')->count(),
-            'delivered' => Order::where('status', 'delivered')->count(),
-            'cancelled' => Order::where('status', 'cancelled')->count(),
-            'total_revenue' => Order::where('status', 'delivered')->sum('total_amount'),
-            'today_orders' => Order::whereDate('created_at', today())->count(),
-            'pending_orders' => Order::whereIn('status', ['pending', 'confirmed'])->count(),
-            'cod_orders' => Order::where('payment_method', 'cod')->count(),
-            'bank_transfer_orders' => Order::where('payment_method', 'bank_transfer')->count(),
-        ];
+        $request->validate([
+            'driver_id' => 'required|exists:drivers,id'
+        ]);
 
-        return view('admin.orders.statistics', compact('stats'));
+        $driver = Driver::findOrFail($request->driver_id);
+
+        if (!$driver->canTakeNewOrder()) {
+            return redirect()->back()
+                ->with('error', 'Tài xế không thể nhận thêm đơn hàng hoặc đang không hoạt động.');
+        }
+
+        if (!$order->can_assign_driver) {
+            return redirect()->back()
+                ->with('error', 'Đơn hàng không thể gán tài xế ở trạng thái hiện tại.');
+        }
+
+        DB::beginTransaction();
+        try {
+            $order->assignDriver($driver);
+
+            DB::commit();
+            return redirect()->back()
+                ->with('success', "Đã gán tài xế {$driver->name} cho đơn hàng #{$order->order_number}");
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()
+                ->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Unassign driver from order
+     */
+    public function unassignDriver(Order $order)
+    {
+        if (!$order->driver_id) {
+            return redirect()->back()
+                ->with('error', 'Đơn hàng chưa được gán tài xế.');
+        }
+
+        DB::beginTransaction();
+        try {
+            $driverName = $order->driver->name;
+            $order->unassignDriver();
+
+            DB::commit();
+            return redirect()->back()
+                ->with('success', "Đã hủy gán tài xế {$driverName} cho đơn hàng #{$order->order_number}");
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()
+                ->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update delivery status
+     */
+    public function updateDeliveryStatus(Request $request, Order $order)
+    {
+        $request->validate([
+            'status' => 'required|in:picked_up,delivering,delivered',
+            'notes' => 'nullable|string|max:500'
+        ]);
+
+        if (!$order->can_update_delivery_status) {
+            return redirect()->back()
+                ->with('error', 'Không thể cập nhật trạng thái giao hàng cho đơn hàng này.');
+        }
+
+        DB::beginTransaction();
+        try {
+            switch ($request->status) {
+                case 'picked_up':
+                    $order->markAsPickedUp($request->notes);
+                    $message = 'Đã cập nhật trạng thái: Đã lấy hàng';
+                    break;
+                case 'delivering':
+                    $order->markAsDelivering($request->notes);
+                    $message = 'Đã cập nhật trạng thái: Đang giao hàng';
+                    break;
+                case 'delivered':
+                    $order->markAsDelivered($request->notes);
+                    $message = 'Đã cập nhật trạng thái: Đã giao hàng thành công';
+                    break;
+            }
+
+            DB::commit();
+            return redirect()->back()
+                ->with('success', $message);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()
+                ->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Find the best available driver for an order
+     */
+    private function findBestDriver($totalWeight, $totalVolume, $deliveryAddress)
+    {
+        // Xác định loại xe cần thiết dựa trên trọng lượng và thể tích
+        $requiredVehicleType = $this->determineRequiredVehicleType($totalWeight, $totalVolume);
+
+        // Tìm tài xế phù hợp
+        $availableDrivers = Driver::available()
+            ->where('vehicle_type', $requiredVehicleType)
+            ->whereHas('currentOrders', function($query) {
+                $query->havingRaw('COUNT(*) < 3');
+            }, '<', 3)
+            ->orWhere(function($query) use ($requiredVehicleType) {
+                $query->where('vehicle_type', $requiredVehicleType)
+                    ->whereDoesntHave('currentOrders');
+            })
+            ->with('currentOrders')
+            ->get();
+
+        if ($availableDrivers->isEmpty()) {
+            // Nếu không có xe phù hợp, thử xe lớn hơn
+            $fallbackVehicles = ['motorbike', 'small_truck', 'van'];
+            $currentIndex = array_search($requiredVehicleType, $fallbackVehicles);
+
+            for ($i = $currentIndex + 1; $i < count($fallbackVehicles); $i++) {
+                $availableDrivers = Driver::available()
+                    ->where('vehicle_type', $fallbackVehicles[$i])
+                    ->whereHas('currentOrders', function($query) {
+                        $query->havingRaw('COUNT(*) < 3');
+                    }, '<', 3)
+                    ->orWhere(function($query) use ($fallbackVehicles, $i) {
+                        $query->where('vehicle_type', $fallbackVehicles[$i])
+                            ->whereDoesntHave('currentOrders');
+                    })
+                    ->with('currentOrders')
+                    ->get();
+
+                if ($availableDrivers->isNotEmpty()) {
+                    break;
+                }
+            }
+        }
+
+        if ($availableDrivers->isEmpty()) {
+            return null;
+        }
+
+        // Sắp xếp theo: số đơn hiện tại (ít hơn) -> rating (cao hơn)
+        return $availableDrivers->sortBy([
+            ['current_orders_count', 'asc'],
+            ['rating', 'desc']
+        ])->first();
+    }
+
+    /**
+     * Determine required vehicle type based on weight and volume
+     */
+    private function determineRequiredVehicleType($totalWeight, $totalVolume)
+    {
+        // Logic xác định loại xe dựa trên trọng lượng và thể tích
+        if ($totalWeight <= 5 && $totalVolume <= 0.05) { // <= 5kg và <= 0.05m³
+            return 'motorbike';
+        } elseif ($totalWeight <= 50 && $totalVolume <= 2) { // <= 50kg và <= 2m³
+            return 'small_truck';
+        } else {
+            return 'van';
+        }
+    }
+
+    /**
+     * Get suggested drivers for order
+     */
+    public function getSuggestedDrivers(Order $order)
+    {
+        $totalWeight = $order->orderItems->sum(function($item) {
+            return ($item->product->weight ?? 0.5) * $item->quantity;
+        });
+
+        $totalVolume = $order->orderItems->sum(function($item) {
+            return ($item->product->volume ?? 0.01) * $item->quantity;
+        });
+
+        $suggestedDriver = $this->findBestDriver($totalWeight, $totalVolume, $order->customer_address);
+        $allAvailableDrivers = Driver::available()->withCount('currentOrders')->get();
+
+        return response()->json([
+            'suggested_driver' => $suggestedDriver,
+            'all_drivers' => $allAvailableDrivers,
+            'order_requirements' => [
+                'weight' => $totalWeight,
+                'volume' => $totalVolume,
+                'required_vehicle' => $this->determineRequiredVehicleType($totalWeight, $totalVolume)
+            ]
+        ]);
     }
 
     /**
@@ -393,7 +666,7 @@ class OrderController extends Controller
      */
     public function export(Request $request)
     {
-        $query = Order::with(['orderItems.product']);
+        $query = Order::with(['orderItems.product', 'driver']);
 
         // Apply same filters as index
         if ($request->filled('status')) {
@@ -401,6 +674,9 @@ class OrderController extends Controller
         }
         if ($request->filled('payment_method')) {
             $query->where('payment_method', $request->payment_method);
+        }
+        if ($request->filled('driver_id')) {
+            $query->where('driver_id', $request->driver_id);
         }
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
@@ -434,6 +710,8 @@ class OrderController extends Controller
                 'Tổng tiền',
                 'Trạng thái',
                 'Phương thức thanh toán',
+                'Tài xế',
+                'Xe',
                 'Ngày tạo',
                 'Ghi chú'
             ]);
@@ -448,8 +726,9 @@ class OrderController extends Controller
                     $order->total_amount,
                     $order->status_name,
                     $order->payment_method ?? 'COD',
+                    $order->driver ? $order->driver->name : 'Chưa gán',
+                    $order->driver ? $order->driver->vehicle_number : '',
                     $order->created_at->format('d/m/Y H:i'),
-                    $order->notes
                 ]);
             }
 

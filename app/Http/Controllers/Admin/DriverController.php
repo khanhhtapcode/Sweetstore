@@ -83,6 +83,10 @@ class DriverController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        // Set default values
+        $validated['rating'] = 0;
+        $validated['total_deliveries'] = 0;
+
         Driver::create($validated);
 
         return redirect()->route('admin.drivers.index')
@@ -103,16 +107,8 @@ class DriverController extends Controller
             'total_orders' => $driver->orders()->count(),
             'completed_orders' => $driver->completedOrders()->count(),
             'current_orders' => $driver->currentOrders()->count(),
-            'average_delivery_time' => $driver->completedOrders()
-                ->whereNotNull('assigned_at')
-                ->whereNotNull('delivered_at')
-                ->get()
-                ->avg(function($order) {
-                    return $order->assigned_at->diffInMinutes($order->delivered_at);
-                }),
-            'on_time_deliveries' => $driver->completedOrders()
-                ->where('delivered_at', '<=', now())
-                ->count(),
+            'average_delivery_time' => $this->calculateAverageDeliveryTime($driver),
+            'on_time_deliveries' => $this->calculateOnTimeDeliveries($driver),
             'total_revenue' => $driver->completedOrders()->sum('total_amount'),
         ];
 
@@ -124,6 +120,7 @@ class DriverController extends Controller
      */
     public function edit(Driver $driver)
     {
+        $driver->load('currentOrders');
         return view('admin.drivers.edit', compact('driver'));
     }
 
@@ -179,7 +176,7 @@ class DriverController extends Controller
             return response()->json(['error' => 'Trạng thái không hợp lệ'], 400);
         }
 
-        // Không cho phép chuyển sang busy nếu có đơn hàng đang giao
+        // Không cho phép chuyển sang inactive nếu có đơn hàng đang giao
         if ($newStatus === 'inactive' && $driver->currentOrders()->count() > 0) {
             return response()->json(['error' => 'Không thể ngừng hoạt động khi đang có đơn hàng'], 400);
         }
@@ -302,14 +299,14 @@ class DriverController extends Controller
                     'Điện thoại' => $driver->phone,
                     'Địa chỉ' => $driver->address,
                     'Số bằng lái' => $driver->license_number,
-                    'Hạn bằng lái' => $driver->license_expiry->format('d/m/Y'),
+                    'Hạn bằng lái' => $driver->license_expiry ? $driver->license_expiry->format('d/m/Y') : '',
                     'Loại xe' => $driver->vehicle_type_name,
                     'Biển số xe' => $driver->vehicle_number,
                     'Trạng thái' => $driver->status_name,
                     'Đánh giá' => $driver->formatted_rating,
                     'Tổng đơn hàng' => $driver->total_deliveries,
                     'Đơn hiện tại' => $driver->current_orders_count,
-                    'Ngày tạo' => $driver->created_at->format('d/m/Y H:i'),
+                    'Ngày tạo' => $driver->created_at ? $driver->created_at->format('d/m/Y H:i') : '',
                 ];
             });
 
@@ -379,5 +376,33 @@ class DriverController extends Controller
             });
 
         return view('admin.drivers.performance', compact('drivers', 'startDate', 'endDate'));
+    }
+
+    /**
+     * Calculate average delivery time for a driver
+     */
+    private function calculateAverageDeliveryTime($driver)
+    {
+        return $driver->completedOrders()
+            ->whereNotNull('assigned_at')
+            ->whereNotNull('delivered_at')
+            ->get()
+            ->avg(function($order) {
+                return $order->assigned_at->diffInMinutes($order->delivered_at);
+            });
+    }
+
+    /**
+     * Calculate on-time deliveries for a driver
+     */
+    private function calculateOnTimeDeliveries($driver)
+    {
+        return $driver->completedOrders()
+            ->whereNotNull('delivered_at')
+            ->get()
+            ->filter(function($order) {
+                return $order->is_on_time_delivery;
+            })
+            ->count();
     }
 }

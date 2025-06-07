@@ -47,6 +47,7 @@
                                    value="{{ $driver->driver_code }}"
                                    class="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100"
                                    readonly>
+                            <p class="text-xs text-gray-500 mt-1">Mã tài xế không thể thay đổi</p>
                         </div>
 
                         <div>
@@ -128,7 +129,7 @@
                             @error('status')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
-                            @if($driver->currentOrders->count() > 0 && in_array(old('status', $driver->status), ['inactive']))
+                            @if($driver->currentOrders && $driver->currentOrders->count() > 0 && in_array(old('status', $driver->status), ['inactive']))
                                 <p class="text-yellow-600 text-sm mt-1">⚠️ Tài xế đang có {{ $driver->currentOrders->count() }} đơn hàng chưa hoàn thành</p>
                             @endif
                         </div>
@@ -161,7 +162,7 @@
                             <input type="date"
                                    name="license_expiry"
                                    id="license_expiry"
-                                   value="{{ old('license_expiry', $driver->license_expiry->format('Y-m-d')) }}"
+                                   value="{{ old('license_expiry', $driver->license_expiry ? $driver->license_expiry->format('Y-m-d') : '') }}"
                                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 @error('license_expiry') border-red-500 @enderror"
                                    required>
                             @error('license_expiry')
@@ -234,19 +235,19 @@
                             <div class="grid grid-cols-2 gap-4 text-sm">
                                 <div>
                                     <p class="text-gray-600">Tổng đơn hàng:</p>
-                                    <p class="font-bold text-blue-600">{{ $driver->orders->count() }}</p>
+                                    <p class="font-bold text-blue-600">{{ $driver->orders->count() ?? 0 }}</p>
                                 </div>
                                 <div>
                                     <p class="text-gray-600">Đã hoàn thành:</p>
-                                    <p class="font-bold text-green-600">{{ $driver->total_deliveries }}</p>
+                                    <p class="font-bold text-green-600">{{ $driver->total_deliveries ?? 0 }}</p>
                                 </div>
                                 <div>
                                     <p class="text-gray-600">Đang giao:</p>
-                                    <p class="font-bold text-yellow-600">{{ $driver->currentOrders->count() }}</p>
+                                    <p class="font-bold text-yellow-600">{{ $driver->currentOrders ? $driver->currentOrders->count() : 0 }}</p>
                                 </div>
                                 <div>
                                     <p class="text-gray-600">Đánh giá:</p>
-                                    <p class="font-bold text-purple-600">{{ $driver->formatted_rating }}</p>
+                                    <p class="font-bold text-purple-600">{{ $driver->formatted_rating ?? '0.0/5.0' }}</p>
                                 </div>
                             </div>
                         </div>
@@ -254,7 +255,7 @@
                 </div>
 
                 <!-- Thông tin cảnh báo -->
-                @if($driver->is_license_expired || $driver->is_license_expiring_soon || $driver->currentOrders->count() > 0)
+                @if($driver->is_license_expired || $driver->is_license_expiring_soon || ($driver->currentOrders && $driver->currentOrders->count() > 0))
                     <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                         <h5 class="text-sm font-semibold text-yellow-800 mb-2">⚠️ Lưu ý quan trọng:</h5>
                         <ul class="text-sm text-yellow-700 space-y-1">
@@ -263,7 +264,7 @@
                             @elseif($driver->is_license_expiring_soon)
                                 <li>• Bằng lái sẽ hết hạn trong {{ $driver->days_to_license_expiry }} ngày</li>
                             @endif
-                            @if($driver->currentOrders->count() > 0)
+                            @if($driver->currentOrders && $driver->currentOrders->count() > 0)
                                 <li>• Tài xế đang có {{ $driver->currentOrders->count() }} đơn hàng chưa hoàn thành</li>
                                 <li>• Không nên đặt trạng thái "Ngừng hoạt động" khi còn đơn hàng đang giao</li>
                             @endif
@@ -288,7 +289,7 @@
                         🔄 Reset
                     </button>
 
-                    @if($driver->currentOrders->count() === 0)
+                    @if(!$driver->currentOrders || $driver->currentOrders->count() === 0)
                         <button type="button"
                                 onclick="confirmDelete()"
                                 class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline">
@@ -321,7 +322,7 @@
 
         // Status change warning
         document.getElementById('status').addEventListener('change', function(e) {
-            const currentOrders = {{ $driver->currentOrders->count() }};
+            const currentOrders = {{ ($driver->currentOrders ? $driver->currentOrders->count() : 0) }};
             if (e.target.value === 'inactive' && currentOrders > 0) {
                 alert('⚠️ Cảnh báo: Tài xế đang có ' + currentOrders + ' đơn hàng chưa hoàn thành. Hãy cân nhắc trước khi ngừng hoạt động!');
             }
