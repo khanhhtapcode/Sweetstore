@@ -18,6 +18,7 @@ class Order extends Model
         'customer_address',
         'total_amount',
         'status',
+        'payment_method',
         'notes'
     ];
 
@@ -60,9 +61,15 @@ class Order extends Model
     }
 
     // Relationship: Một đơn hàng có nhiều order items
-    public function items()
+    public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    // Alias for backward compatibility
+    public function items()
+    {
+        return $this->orderItems();
     }
 
     // Accessor để lấy tên trạng thái

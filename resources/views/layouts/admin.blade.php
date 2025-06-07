@@ -10,6 +10,9 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -107,7 +110,7 @@
                 <div class="flex items-center space-x-4">
                     <span class="text-sm text-gray-600">Xin chào, {{ Auth::user()->name }}</span>
 
-                    <!-- Dropdown -->
+                    <!-- Dropdown với Alpine.js -->
                     <div class="relative" x-data="{ open: false }">
                         <button @click="open = !open"
                                 class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -168,5 +171,44 @@
         </main>
     </div>
 </div>
+
+<!-- Debug script để tìm auto reload -->
+<script>
+    console.log('Admin layout loaded');
+
+    // Chặn auto reload và log nguồn gốc
+    let originalReload = location.reload;
+    location.reload = function() {
+        console.error('🚫 BLOCKED: Page reload attempt detected!');
+        console.trace('Reload source:');
+        // return originalReload.apply(this, arguments); // Uncomment để cho phép reload
+    };
+
+    // Log tất cả setInterval/setTimeout
+    let intervals = [];
+    let timeouts = [];
+
+    let originalSetInterval = setInterval;
+    window.setInterval = function(callback, delay) {
+        console.log('⏰ setInterval created:', delay + 'ms', callback.toString().substring(0, 100));
+        let id = originalSetInterval.apply(this, arguments);
+        intervals.push({id, delay, callback: callback.toString()});
+        return id;
+    };
+
+    let originalSetTimeout = setTimeout;
+    window.setTimeout = function(callback, delay) {
+        console.log('⏱️ setTimeout created:', delay + 'ms', callback.toString().substring(0, 100));
+        let id = originalSetTimeout.apply(this, arguments);
+        timeouts.push({id, delay, callback: callback.toString()});
+        return id;
+    };
+
+    // Command để xem tất cả interval/timeout đang chạy
+    window.showTimers = function() {
+        console.log('🔍 Active intervals:', intervals);
+        console.log('🔍 Active timeouts:', timeouts);
+    };
+</script>
 </body>
 </html>
