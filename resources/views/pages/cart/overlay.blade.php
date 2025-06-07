@@ -2,7 +2,6 @@
     // Không cần khởi tạo $cart từ session nữa vì dữ liệu lấy từ $cartItems
     $totalPrice = $totalPrice ?? 0; // Đảm bảo $totalPrice có giá trị
 ?>
-
 <button id="closeCart" onclick="closeCartOverlay()">×</button>
 <div class="cart-container">
     @if($cartItems->isEmpty())
@@ -42,7 +41,7 @@
             Tổng tiền: {{ number_format($totalPrice, 0, ',', '.') }} VNĐ
         </div>
         <div class="cart-actions mt-4">
-            <a href="{{ route('cart.show_cart') }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Xem giỏ hàng</a>
+            <a href="{{ route('cart.show_cart') }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Xem chi tiết giỏ hàng</a>
             <a href="#" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Thanh toán</a>
         </div>
     @endif
