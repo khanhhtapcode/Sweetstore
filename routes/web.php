@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\RatingReplyController;
 use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\Admin\DashboardController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -82,6 +83,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('products/export', [AdminProductController::class, 'export'])->name('products.export');
     Route::post('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
     Route::post('users/{user}/change-role', [UserController::class, 'changeRole'])->name('users.change-role');
+
+    // Các route API mới cho Dashboard
+    Route::get('/dashboard/revenue-data', [DashboardController::class, 'revenueData'])->name('dashboard.revenue-data');
+    Route::get('/dashboard/top-products', [DashboardController::class, 'topProducts'])->name('dashboard.top-products');
+    Route::get('/dashboard/top-customers', [DashboardController::class, 'topCustomers'])->name('dashboard.top-customers');
+    Route::get('/dashboard/order-status-data', [DashboardController::class, 'getOrderStatusData'])->name('dashboard.order-status-data');
 });
+
+// Chatbot Route
 Route::post('/chatbot/chat', [ChatbotController::class, 'chat'])->name('chatbot.chat');
+
 require __DIR__ . '/auth.php';
