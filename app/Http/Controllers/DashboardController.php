@@ -8,27 +8,26 @@ use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-public function index()
-{
-$user = Auth::user();
+    public function index()
+    {
+        $user = Auth::user();
 
-// Lấy đơn hàng gần đây của user (nếu có)
-$user_orders = null;
-if ($user) {
-$user_orders = Order::where('user_id', $user->id)
-->with(['items.product'])
-->latest()
-->take(3)
-->get();
-}
+        // Lấy đơn hàng gần đây của user (nếu có)
+        $user_orders = collect(); // Khởi tạo collection rỗng
+        if ($user) {
+            $user_orders = Order::where('user_id', $user->id)
+                ->latest()
+                ->take(3)
+                ->get();
+        }
 
-// Lấy sản phẩm nổi bật
-$featured_products = Product::with('category')
-->active()
-->featured()
-->take(4)
-->get();
+        // Lấy sản phẩm nổi bật
+        $featured_products = Product::with('category')
+            ->active()
+            ->featured()
+            ->take(4)
+            ->get();
 
-return view('dashboard', compact('user_orders', 'featured_products'));
-}
+        return view('dashboard', compact('user_orders', 'featured_products'));
+    }
 }

@@ -1,5 +1,5 @@
 <style>
-    /* Container giỏ hàng */
+    /* Giữ nguyên CSS của bạn */
     .cart-container {
         max-width: 1200px;
         margin: 40px auto;
@@ -13,7 +13,6 @@
         gap: 20px;
     }
 
-    /* Cột trái (Danh sách sản phẩm) */
     .cart-items {
         flex: 2;
         padding-right: 20px;
@@ -75,7 +74,6 @@
         margin-top: 4px;
     }
 
-    /* Nút tăng/giảm số lượng */
     .cart_quantity {
         display: flex;
         align-items: center;
@@ -112,7 +110,6 @@
         color: #1f2937;
     }
 
-    /* Ghi chú đơn hàng */
     .cart-note {
         margin-top: 24px;
     }
@@ -143,7 +140,6 @@
         outline: none;
     }
 
-    /* Cột phải (Thông tin tổng tiền) */
     .cart-summary {
         flex: 1;
         padding-left: 20px;
@@ -189,7 +185,6 @@
         transform: translateY(-2px);
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
         .cart-container {
             flex-direction: column;
@@ -237,84 +232,74 @@
         </div>
     </x-slot>
 
+    <!-- Đảm bảo CSRF token -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     @if ($cartItems->isEmpty())
     <div class="cart-container cart-empty">
         <p>Giỏ hàng của bạn đang trống</p>
         <a href="{{ route('home') }}">Tiếp tục mua sắm</a>
     </div>
     @else
-    <div class="cart-container">
-        <div class="cart-items">
-            @foreach($cartItems as $item)
-            @php
-            $subtotal = $item->quantity * $item->price;
-            $imageUrl = $item->image_url ? asset($item->image_url) : null;
-            $productUrl = route('products.show', $item->product_id);
-            @endphp
-            <div class="cart-item" data-product-id="{{ $item->product_id }}">
-                @if($imageUrl)
-                <img src="{{ $imageUrl }}" alt="{{ $item->product_name }}" class="product-image">
-                @else
-                <div class="product-placeholder">🧁</div>
-                @endif
-                <div class="product-info">
-                    <a href="{{ $productUrl }}" class="product-name">{{ $item->product_name }}</a>
-                    <p class="product-price">Giá: {{ number_format($item->price, 0, ',', '.') }}đ</p>
-                    <p class="product-price">Thành tiền: {{ number_format($subtotal, 0, ',', '.') }}đ</p>
+    <form action="{{ route('cart.update_show_cart') }}" method="POST" id="cart-form">
+        @csrf
+        <div class="cart-container">
+            <div class="cart-items">
+                @foreach($cartItems as $item)
+                @php
+                $subtotal = $item->quantity * $item->price;
+                $imageUrl = $item->image_url ? asset($item->image_url) : null;
+                $productUrl = route('products.show', $item->product_id);
+                @endphp
+                <div class="cart-item" data-product-id="{{ $item->product_id }}" data-price="{{ $item->price }}">
+                    @if($imageUrl)
+                    <img src="{{ $imageUrl }}" alt="{{ $item->product_name }}" class="product-image">
+                    @else
+                    <div class="product-placeholder">🧁</div>
+                    @endif
+                    <div class="product-info">
+                        <a href="{{ $productUrl }}" class="product-name">{{ $item->product_name }}</a>
+                        <p class="product-price">Giá: {{ number_format($item->price, 0, ',', '.') }}đ</p>
+                        <p class="product-price subtotal">Thành tiền: {{ number_format($subtotal, 0, ',', '.') }}đ</p>
+                    </div>
+                    <div class="cart_quantity flex items-center gap-4">
+                        <button type="button" class="cart_quantity_down" data-product-id="{{ $item->product_id }}">-</button>
+                        <input class="cart_quantity_input" type="number" name="quantities[{{ $item->product_id }}]" value="{{ $item->quantity }}" min="0" autocomplete="off">
+                        <button type="button" class="cart_quantity_up" data-product-id="{{ $item->product_id }}">+</button>
+                        <button type="button" class="delete-btn text-red-600 hover:text-red-800 font-bold" data-product-id="{{ $item->product_id }}">Xóa</button>
+                    </div>
                 </div>
-                <div class="cart_quantity flex items-center gap-4">
-                    <form action="{{ route('cart.update') }}" method="POST" class="cart-form">
-                        @csrf
-                        <input type="hidden" name="product_id" value="{{ $item->product_id }}">
-                        <input type="hidden" name="action" value="decrease">
-                        <button type="submit" class="cart_quantity_down">-</button>
-                    </form>
-                    <input class="cart_quantity_input" type="text" name="quantity" value="{{ $item->quantity }}" autocomplete="off" readonly>
-                    <form action="{{ route('cart.update') }}" method="POST" class="cart-form">
-                        @csrf
-                        <input type="hidden" name="product_id" value="{{ $item->product_id }}">
-                        <input type="hidden" name="action" value="increase">
-                        <button type="submit" class="cart_quantity_up">+</button>
-                    </form>
-                    <button class="delete-btn text-red-600 hover:text-red-800 font-bold" data-product-id="{{ $item->product_id }}">Xóa</button>
+                @endforeach
+
+                <div class="cart-note">
+                    <label for="order_note">Ghi chú đơn hàng <small>(VD: Giao sáng mai, lưu ý khi đóng hàng...)</small></label>
+                    <textarea id="order_note" name="order_note" maxlength="200" placeholder="Nhập thông tin ghi chú của bạn ..." rows="4"></textarea>
+                    <small id="noteCounter">0 / 200 ký tự</small>
                 </div>
             </div>
-            @endforeach
 
-            <div class="cart-note">
-                <label for="order_note">Ghi chú đơn hàng <small>(VD: Giao sáng mai, lưu ý khi đóng hàng...)</small></label>
-                <textarea id="order_note" name="order_note" maxlength="200" placeholder="Nhập thông tin ghi chú của bạn ..." rows="4"></textarea>
-                <small id="noteCounter">0 / 200 ký tự</small>
-            </div>
-        </div>
-
-        <div class="cart-summary">
-            <h3>THÔNG TIN ĐƠN HÀNG</h3>
-            <p>Bạn có <strong id="cart-count">{{ $cartItems->count() }}</strong> sản phẩm trong giỏ hàng</p>
-            @php
-            $total = $cartItems->sum(function ($item) {
+            <div class="cart-summary">
+                <h3>THÔNG TIN ĐƠN HÀNG</h3>
+                <p>Bạn có <strong id="cart-count">{{ $cartItems->sum('quantity') }}</strong> sản phẩm trong giỏ hàng</p>
+                @php
+                $total = $cartItems->sum(function ($item) {
                 return $item->quantity * $item->price;
-            });
-            $shipping = ($total >= 500000) ? 0 : 30000;
-            $final = $total + $shipping;
-            @endphp
-            <ul>
-                <li>Tạm tính: <span id="temp-total">{{ number_format($total, 0, ',', '.') }}</span>đ</li>
-                <li>Phí giao hàng: <span id="shipping-fee">{{ $shipping == 0 ? 'Miễn phí' : number_format($shipping, 0, ',', '.') . 'đ' }}</span></li>
-                <li>VAT: Đã bao gồm</li>
-            </ul>
-            <div class="total-price">Tổng cộng: <span id="final-total">{{ number_format($final, 0, ',', '.') }}</span>đ</div>
-
-            <form action="#" method="POST">
-                @csrf
-                <input type="hidden" name="total" value="{{ $final }}">
-                <button type="submit" class="checkout-btn">Thanh toán</button>
-            </form>
+                });
+                $shipping = ($total >= 500000) ? 0 : 30000;
+                $final = $total + $shipping;
+                @endphp
+                <ul>
+                    <li>Tạm tính: <span id="temp-total">{{ number_format($total, 0, ',', '.') }}</span>đ</li>
+                    <li>Phí giao hàng: <span id="shipping-fee">{{ $shipping == 0 ? 'Miễn phí' : number_format($shipping, 0, ',', '.') . 'đ' }}</span></li>
+                    <li>VAT: Đã bao gồm</li>
+                </ul>
+                <div class="total-price">Tổng cộng: <span id="final-total">{{ number_format($final, 0, ',', '.') }}</span>đ</div>
+                <button type="submit" class="checkout-btn">Lưu và Thanh toán</button>
+            </div>
         </div>
-    </div>
+    </form>
     @endif
 
-    <!-- JavaScript xử lý AJAX -->
     <script>
         // --- Show notification ---
         function showNotification(message, type = 'success') {
@@ -330,131 +315,142 @@
             }, 3000);
         }
 
-        // --- Handle cart action with debounce prevention ---
+        // --- Update cart totals ---
+        function updateCartTotals() {
+            let total = 0;
+            let totalQuantity = 0; // Thêm biến để tính tổng số lượng
+            document.querySelectorAll('.cart-item').forEach(item => {
+                const quantity = parseInt(item.querySelector('.cart_quantity_input').value) || 0;
+                const price = parseFloat(item.getAttribute('data-price')) || 0;
+                const subtotal = quantity * price;
+                item.querySelector('.subtotal').textContent = `Thành tiền: ${subtotal.toLocaleString('vi-VN')}đ`;
+                total += subtotal;
+                totalQuantity += quantity; // Cộng dồn số lượng
+            });
+
+            const shipping = total >= 500000 ? 0 : 30000;
+            const finalTotal = total + shipping;
+
+            document.getElementById('cart-count').textContent = totalQuantity; // Cập nhật tổng số lượng
+            document.getElementById('temp-total').textContent = total.toLocaleString('vi-VN');
+            document.getElementById('shipping-fee').textContent = shipping === 0 ? 'Miễn phí' : shipping.toLocaleString('vi-VN') + 'đ';
+            document.getElementById('final-total').textContent = finalTotal.toLocaleString('vi-VN');
+        }
+
+        // --- Handle quantity change with AJAX ---
         let isCartActionRunning = false;
 
-        async function handleCartAction(element, event) {
-            event.preventDefault();
+        async function updateQuantity(productId, action) {
             if (isCartActionRunning) return;
             isCartActionRunning = true;
 
-            let url, method, formData;
+            const cartItem = document.querySelector(`.cart-item[data-product-id="${productId}"]`);
+            const quantityInput = cartItem.querySelector('.cart_quantity_input');
+            let quantity = parseInt(quantityInput.value) || 0;
 
-            if (element.closest('form')?.classList.contains('cart-form')) {
-                url = '{{ route("cart.update") }}';
-                method = 'POST';
-                formData = new FormData(element.closest('form'));
-            } else if (element.classList.contains('delete-btn')) {
-                const productId = element.getAttribute('data-product-id');
-                if (!productId) {
-                    showNotification('Không tìm thấy ID sản phẩm!', 'error');
-                    isCartActionRunning = false;
-                    return;
-                }
-                url = '{{ route("cart.delete", ["productId" => ":id"]) }}'.replace(':id', productId);
-                method = 'POST';
-                formData = new FormData();
-                formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-            } else {
-                showNotification('Hành động không hợp lệ!', 'error');
-                isCartActionRunning = false;
-                return;
+            if (action === 'increase') {
+                quantity++;
+            } else if (action === 'decrease' && quantity > 0) {
+                quantity--;
             }
 
-            element.disabled = true;
-            const originalText = element.textContent;
+            const formData = new FormData();
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+            formData.append('product_id', productId);
+            formData.append('action', action);
 
             try {
-                const response = await fetch(url, {
-                    method,
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
+                const response = await fetch('{{ route("cart.update_show_cart") }}', {
+                    method: 'POST',
                     body: formData
                 });
 
-                const data = await response.json();
-
-                if (!response.ok || !data.success) {
-                    throw new Error(data.message || 'Không thể thực hiện hành động');
+                if (!response.ok) {
+                    throw new Error('Không thể cập nhật giỏ hàng');
                 }
 
-                const cartItem = element.closest('.cart-item');
-                const quantityInput = cartItem?.querySelector('.cart_quantity_input');
-                const cartCount = document.getElementById('cart-count');
-                const tempTotal = document.getElementById('temp-total');
-                const shippingFee = document.getElementById('shipping-fee');
-                const finalTotal = document.getElementById('final-total');
-
-                if (data.cartCount === 0) {
-                    window.location.reload();
+                quantityInput.value = quantity;
+                if (quantity <= 0) {
+                    cartItem.remove();
+                    showNotification('Sản phẩm đã được xóa khỏi giỏ hàng 🛒', 'success');
                 } else {
-                    if (element.classList.contains('delete-btn')) {
-                        cartItem.remove();
-                        showNotification('Đã xóa sản phẩm khỏi giỏ hàng 🛒', 'success');
-                    } else if (quantityInput) {
-                        const productPriceText = cartItem.querySelector('.product-price').textContent.replace('Giá:', '').replace('đ', '').replace(/\./g, '');
-                        const productPrice = parseFloat(productPriceText);
-                        const newQuantity = parseInt(data.quantity);
-                        if (newQuantity > 0) {
-                            quantityInput.value = newQuantity;
-                            const subtotal = newQuantity * productPrice;
-                            cartItem.querySelectorAll('.product-price')[1].textContent = `Thành tiền: ${subtotal.toLocaleString('vi-VN')}đ`;
-                            showNotification(`Đã cập nhật số lượng sản phẩm ${data.quantity > parseInt(quantityInput.defaultValue) ? 'tăng' : 'giảm'} 🛒`, 'success');
-                        } else {
-                            cartItem.remove();
-                            showNotification('Đã xóa sản phẩm khỏi giỏ hàng 🛒', 'success');
-                        }
-                    }
-
-                    const totalPrice = data.totalPrice;
-                    const shipping = totalPrice >= 500000 ? 0 : 30000;
-                    const finalPrice = totalPrice + shipping;
-
-                    cartCount.textContent = data.cartCount;
-                    tempTotal.textContent = totalPrice.toLocaleString('vi-VN');
-                    shippingFee.textContent = shipping === 0 ? 'Miễn phí' : shipping.toLocaleString('vi-VN') + 'đ';
-                    finalTotal.textContent = finalPrice.toLocaleString('vi-VN');
-
-                    // Update cart count in the header
-                    document.querySelector('.cart-count')?.textContent = data.cartCount;
+                    showNotification(`Đã cập nhật số lượng ${action === 'increase' ? 'tăng' : 'giảm'} 🛒`, 'success');
                 }
+                updateCartTotals();
             } catch (error) {
-                console.error('Fetch error:', error);
+                console.error('Error:', error);
                 showNotification('Có lỗi xảy ra: ' + error.message, 'error');
+                quantityInput.value = parseInt(quantityInput.getAttribute('data-original-value')) || 0; // Rollback
             } finally {
                 isCartActionRunning = false;
-                element.disabled = false;
-                element.textContent = originalText;
             }
         }
 
-        // --- Attach cart events ---
-        function attachCartEvents() {
-            document.querySelectorAll('.cart-form button, .delete-btn').forEach(button => {
-                button.replaceWith(button.cloneNode(true)); // Remove old listeners
+        // --- Handle delete with AJAX ---
+        async function deleteItem(productId) {
+            if (isCartActionRunning) return;
+            isCartActionRunning = true;
+
+            const cartItem = document.querySelector(`.cart-item[data-product-id="${productId}"]`);
+            const formData = new FormData();
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+            formData.append('product_id', productId);
+
+            try {
+                const response = await fetch('{{ route("cart.delete_from_show_cart", ["productId" => ":id"]) }}'.replace(':id', productId), {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Không thể xóa sản phẩm');
+                }
+
+                cartItem.remove();
+                showNotification('Sản phẩm đã được xóa khỏi giỏ hàng 🛒', 'success');
+                updateCartTotals();
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Có lỗi xảy ra: ' + error.message, 'error');
+            } finally {
+                isCartActionRunning = false;
+            }
+        }
+
+        // --- Attach event listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.cart_quantity_up').forEach(button => {
+                button.addEventListener('click', () => {
+                    const productId = button.getAttribute('data-product-id');
+                    updateQuantity(productId, 'increase');
+                });
             });
 
-            document.querySelectorAll('.cart-form button').forEach(button => {
-                button.addEventListener('click', e => handleCartAction(button, e));
+            document.querySelectorAll('.cart_quantity_down').forEach(button => {
+                button.addEventListener('click', () => {
+                    const productId = button.getAttribute('data-product-id');
+                    updateQuantity(productId, 'decrease');
+                });
             });
 
             document.querySelectorAll('.delete-btn').forEach(button => {
-                button.addEventListener('click', e => handleCartAction(button, e));
+                button.addEventListener('click', () => {
+                    const productId = button.getAttribute('data-product-id');
+                    deleteItem(productId);
+                });
             });
-        }
 
-        // --- Note counter ---
-        const note = document.getElementById('order_note');
-        const noteCounter = document.getElementById('noteCounter');
-        if (note) {
-            note.addEventListener('input', () => {
-                noteCounter.textContent = `${note.value.length} / 200 ký tự`;
-            });
-        }
+            // --- Note counter ---
+            const note = document.getElementById('order_note');
+            const noteCounter = document.getElementById('noteCounter');
+            if (note) {
+                note.addEventListener('input', () => {
+                    noteCounter.textContent = `${note.value.length} / 200 ký tự`;
+                });
+            }
 
-        // --- On load ---
-        document.addEventListener('DOMContentLoaded', attachCartEvents);
+            // Initial update
+            updateCartTotals();
+        });
     </script>
 </x-app-layout>

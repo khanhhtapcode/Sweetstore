@@ -42,7 +42,7 @@
         </div>
         <div class="cart-actions mt-4">
             <a href="{{ route('cart.show_cart') }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Xem chi tiết giỏ hàng</a>
-            <a href="#" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Thanh toán</a>
+            <a href="{{ route('checkout.show') }}" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Thanh toán</a>
         </div>
     @endif
 </div>

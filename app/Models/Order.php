@@ -18,6 +18,7 @@ class Order extends Model
         'customer_address',
         'total_amount',
         'status',
+        'payment_method',
         'notes'
     ];
 
@@ -51,12 +52,24 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
-    // Relationship: Một đơn hàng có nhiều sản phẩm
+    // Relationship: Một đơn hàng có nhiều sản phẩm qua bảng order_items
     public function products()
     {
         return $this->belongsToMany(Product::class, 'order_items')
             ->withPivot('quantity', 'price')
             ->withTimestamps();
+    }
+
+    // Relationship: Một đơn hàng có nhiều order items
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    // Alias for backward compatibility
+    public function items()
+    {
+        return $this->orderItems();
     }
 
     // Accessor để lấy tên trạng thái
