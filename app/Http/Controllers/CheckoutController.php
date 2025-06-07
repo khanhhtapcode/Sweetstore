@@ -71,7 +71,7 @@ class CheckoutController extends Controller
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'required|string|max:20',
             'customer_address' => 'required|string|max:1000',
-            'payment_method' => 'required|in:cod,bank_transfer,credit_card',
+            'payment_method' => 'required|in:cod,bank_transfer,credit_card,momo,VNpay', // Thêm momo vào đây
             'notes' => 'nullable|string|max:1000'
         ], [
             'customer_name.required' => 'Vui lòng nhập họ tên.',
@@ -80,8 +80,9 @@ class CheckoutController extends Controller
             'customer_phone.required' => 'Vui lòng nhập số điện thoại.',
             'customer_address.required' => 'Vui lòng nhập địa chỉ giao hàng.',
             'payment_method.required' => 'Vui lòng chọn phương thức thanh toán.',
-            'payment_method.in' => 'Phương thức thanh toán không hợp lệ.'
+            'payment_method.in' => 'Phương thức thanh toán không hợp lệ.' // Đây là message lỗi bạn thấy
         ]);
+
 
         $cartItems = CartItem::where('user_id', Auth::id())->get();
 

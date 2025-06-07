@@ -94,9 +94,11 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Thanh toán</label>
                     <select name="payment_method" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
                         <option value="">Tất cả phương thức</option>
-                        <option value="cod" {{ request('payment_method') == 'cod' ? 'selected' : '' }}>COD</option>
-                        <option value="bank_transfer" {{ request('payment_method') == 'bank_transfer' ? 'selected' : '' }}>Chuyển khoản</option>
-                        <option value="credit_card" {{ request('payment_method') == 'credit_card' ? 'selected' : '' }}>Thẻ tín dụng</option>
+                        <option value="cod" {{ request('payment_method') == 'cod' ? 'selected' : '' }}>💵 COD</option>
+                        <option value="bank_transfer" {{ request('payment_method') == 'bank_transfer' ? 'selected' : '' }}>🏦 Chuyển khoản</option>
+                        <option value="credit_card" {{ request('payment_method') == 'credit_card' ? 'selected' : '' }}>💳 Thẻ tín dụng</option>
+                        <option value="momo" {{ request('payment_method') == 'momo' ? 'selected' : '' }}>MoMo</option>
+                        <option value="zalopay" {{ request('payment_method') == 'zalopay' ? 'selected' : '' }}>💜 ZaloPay</option>
                     </select>
                 </div>
                 <div>
@@ -192,23 +194,48 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @php
-                                // Sửa lỗi payment_method - an toàn hơn
                                 $paymentConfig = [
-                                    'cod' => ['class' => 'bg-orange-100 text-orange-800', 'text' => 'COD'],
-                                    'bank_transfer' => ['class' => 'bg-blue-100 text-blue-800', 'text' => 'Chuyển khoản'],
-                                    'credit_card' => ['class' => 'bg-green-100 text-green-800', 'text' => 'Thẻ tín dụng'],
-                                    'momo' => ['class' => 'bg-purple-100 text-purple-800', 'text' => 'MoMo'],
-                                    'zalopay' => ['class' => 'bg-pink-100 text-pink-800', 'text' => 'ZaloPay']
+                                    'cod' => [
+                                        'class' => 'bg-orange-100 text-orange-800',
+                                        'text' => 'COD',
+                                        'icon' => '💵'
+                                    ],
+                                    'bank_transfer' => [
+                                        'class' => 'bg-blue-100 text-blue-800',
+                                        'text' => 'Chuyển khoản',
+                                        'icon' => '🏦'
+                                    ],
+                                    'credit_card' => [
+                                        'class' => 'bg-green-100 text-green-800',
+                                        'text' => 'Thẻ tín dụng',
+                                        'icon' => '💳'
+                                    ],
+                                    'momo' => [
+                                        'class' => 'bg-pink-100 text-pink-800',
+                                        'text' => 'MoMo',
+                                        'logo' => 'https://homepage.momocdn.net/fileuploads/svg/momo-file-240411162904.svg'
+                                    ],
+                                    'zalopay' => [
+                                        'class' => 'bg-purple-100 text-purple-800',
+                                        'text' => 'ZaloPay',
+                                        'icon' => '💜'
+                                    ]
                                 ];
 
                                 // An toàn hơn - kiểm tra null và isset
                                 $currentPaymentMethod = $order->payment_method ?? 'cod';
                                 $payment = $paymentConfig[$currentPaymentMethod] ?? [
                                     'class' => 'bg-gray-100 text-gray-800',
-                                    'text' => 'Không xác định'
+                                    'text' => 'Không xác định',
+                                    'icon' => '❓'
                                 ];
                             @endphp
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $payment['class'] }}">
+                                 @if(isset($payment['logo']))
+                                    <img src="{{ $payment['logo'] }}" alt="{{ $payment['text'] }}" class="w-4 h-4 mr-1">
+                                @else
+                                    <span class="mr-1">{{ $payment['icon'] ?? '' }}</span>
+                                @endif
                                 {{ $payment['text'] }}
                             </span>
                         </td>

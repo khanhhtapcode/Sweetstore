@@ -30,11 +30,11 @@
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">Ngày đặt:</p>
-                                <p class="font-medium">{{ $order->created_at->format('d/m/Y H:i') }}</p>
+                                <p class="font-medium">{{ $order->created_at->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}</p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">Tổng tiền:</p>
-                                <p class="font-semibold text-lg text-blue-600">{{ $order->formatted_total }}</p>
+                                <p class="font-semibold text-lg text-blue-600">{{ number_format($order->total_amount, 0, ',', '.') }}₫</p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">Trạng thái:</p>
@@ -42,6 +42,57 @@
                                     {{ $order->status_name }}
                                 </span>
                             </div>
+                        </div>
+
+                        <!-- Thông tin thanh toán -->
+                        <div class="mt-4 pt-4 border-t border-gray-200">
+                            <p class="text-sm text-gray-600 mb-2">Phương thức thanh toán:</p>
+                            <div class="flex items-center">
+                                @switch($order->payment_method)
+                                    @case('cod')
+                                        <div class="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center mr-2">
+                                            💵
+                                        </div>
+                                        <span class="font-medium">Thanh toán khi nhận hàng (COD)</span>
+                                        @break
+                                    @case('bank_transfer')
+                                        <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                            🏦
+                                        </div>
+                                        <span class="font-medium">Chuyển khoản ngân hàng</span>
+                                        @break
+                                    @case('credit_card')
+                                        <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-2">
+                                            💳
+                                        </div>
+                                        <span class="font-medium">Thẻ tín dụng/ghi nợ</span>
+                                        @break
+                                    @case('momo')
+                                        <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center mr-2 border border-gray-200">
+                                            <img src="https://homepage.momocdn.net/fileuploads/svg/momo-file-240411162904.svg"
+                                                 alt="MoMo Logo" class="w-6 h-6">
+                                        </div>
+                                        <span class="font-medium text-pink-600">Ví MoMo</span>
+                                        <span class="ml-2 px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">Đã thanh toán</span>
+                                        @break
+                                    @default
+                                        <span class="font-medium">{{ $order->payment_method }}</span>
+                                @endswitch
+                            </div>
+
+                            @if($order->payment_method === 'momo')
+                                <div class="mt-3 p-3 bg-pink-50 rounded-lg">
+                                    <div class="flex items-center mb-2">
+                                        <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        <span class="text-sm font-medium text-green-700">Giao dịch thành công</span>
+                                    </div>
+                                    <div class="text-xs text-gray-600 space-y-1">
+                                        <p>Số tiền: {{ number_format($order->total_amount, 0, ',', '.') }}₫</p>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
 
@@ -148,4 +199,6 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</x-app-layout>Mã giao dịch: MOMO{{ $order->created_at->timestamp }}{{ $order->id }}</p>
+<p>Thời gian: {{ $order->created_at->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i:s') }}</p>
+<p>
