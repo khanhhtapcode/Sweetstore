@@ -39,12 +39,15 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => User::ROLE_USER, // Set default role as user
+            'is_active' => true, // Set active by default
         ]);
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        // Redirect to email verification notice instead of dashboard
+        return redirect()->route('verification.notice');
     }
 }

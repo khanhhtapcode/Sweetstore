@@ -77,8 +77,8 @@
                 </div>
             </div>
 
-            <!-- User Orders (if any) -->
-            @if(isset($user_orders) && $user_orders->count() > 0)
+            <!-- User Orders (if any) - ĐÃ SỬA LỖI -->
+            @if($user_orders && $user_orders->count() > 0)
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
                         <h4 class="text-lg font-semibold text-gray-900 mb-4">Đơn Hàng Gần Đây</h4>
@@ -86,17 +86,35 @@
                             @foreach($user_orders as $order)
                                 <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                                     <div>
-                                        <p class="font-semibold text-gray-900">{{ $order->order_number }}</p>
-                                        <p class="text-sm text-gray-600">{{ $order->created_at->format('d/m/Y H:i') }}</p>
+                                        <p class="font-semibold text-gray-900">{{ $order->order_number ?? 'N/A' }}</p>
+                                        <p class="text-sm text-gray-600">{{ $order->created_at ? $order->created_at->format('d/m/Y H:i') : 'N/A' }}</p>
                                     </div>
                                     <div class="text-right">
-                                        <p class="font-semibold text-gray-900">{{ $order->formatted_total }}</p>
-                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                                            @if($order->status == 'pending') bg-yellow-100 text-yellow-800
-                                            @elseif($order->status == 'delivered') bg-green-100 text-green-800
-                                            @else bg-blue-100 text-blue-800
-                                            @endif">
-                                            {{ $order->status_name }}
+                                        <p class="font-semibold text-gray-900">
+                                            {{ $order->total_amount ? number_format($order->total_amount, 0, ',', '.') . ' VNĐ' : '0 VNĐ' }}
+                                        </p>
+                                        @php
+                                            $statusClasses = [
+                                                'pending' => 'bg-yellow-100 text-yellow-800',
+                                                'confirmed' => 'bg-blue-100 text-blue-800',
+                                                'preparing' => 'bg-purple-100 text-purple-800',
+                                                'ready' => 'bg-orange-100 text-orange-800',
+                                                'delivered' => 'bg-green-100 text-green-800',
+                                                'cancelled' => 'bg-red-100 text-red-800'
+                                            ];
+                                            $statusNames = [
+                                                'pending' => 'Chờ xác nhận',
+                                                'confirmed' => 'Đã xác nhận',
+                                                'preparing' => 'Đang chuẩn bị',
+                                                'ready' => 'Sẵn sàng giao',
+                                                'delivered' => 'Đã giao',
+                                                'cancelled' => 'Đã hủy'
+                                            ];
+                                            $statusClass = $statusClasses[$order->status] ?? 'bg-gray-100 text-gray-800';
+                                            $statusName = $statusNames[$order->status] ?? 'Không xác định';
+                                        @endphp
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $statusClass }}">
+                                            {{ $statusName }}
                                         </span>
                                     </div>
                                 </div>
@@ -120,7 +138,7 @@
                         $featuredProducts = \App\Models\Product::with('category')->active()->featured()->take(4)->get();
                     @endphp
 
-                    @if($featuredProducts->count() > 0)
+                    @if($featuredProducts && $featuredProducts->count() > 0)
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                             @foreach($featuredProducts as $product)
                                 <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition duration-300">
@@ -137,7 +155,9 @@
                                         <h5 class="font-semibold text-gray-900 text-sm line-clamp-1">{{ $product->name }}</h5>
                                         <p class="text-xs text-gray-600 mt-1">{{ $product->category->name ?? 'Khác' }}</p>
                                         <div class="flex justify-between items-center mt-2">
-                                            <span class="font-bold text-pink-600 text-sm">{{ $product->formatted_price }}</span>
+                                            <span class="font-bold text-pink-600 text-sm">
+                                                {{ $product->price ? number_format($product->price, 0, ',', '.') . ' VNĐ' : '0 VNĐ' }}
+                                            </span>
                                             <a href="{{ route('products.show', $product) }}"
                                                class="bg-pink-600 text-white px-2 py-1 rounded text-xs hover:bg-pink-700 transition duration-300">
                                                 Xem
@@ -148,6 +168,9 @@
                             @endforeach
                         </div>
                     @else
+                        <div class="text-center py-8">
+                            <p class="text-gray-500">Chưa có sản phẩm nổi bật nào.</p>
+                        </div>
                     @endif
                 </div>
             </div>
@@ -169,7 +192,9 @@
                                 </div>
                                 <div>
                                     <dt class="text-sm font-medium text-gray-500">Vai trò</dt>
-                                    <dd class="text-sm text-gray-900">{{ Auth::user()->role_name }}</dd>
+                                    <dd class="text-sm text-gray-900">
+                                        {{ Auth::user()->role == 'admin' ? 'Quản trị viên' : 'Khách hàng' }}
+                                    </dd>
                                 </div>
                             </dl>
                         </div>
@@ -187,7 +212,9 @@
                                 </div>
                                 <div>
                                     <dt class="text-sm font-medium text-gray-500">Tổng đơn hàng</dt>
-                                    <dd class="text-sm text-gray-900">{{ Auth::user()->orders()->count() }} đơn hàng</dd>
+                                    <dd class="text-sm text-gray-900">
+                                        {{ Auth::user()->orders ? Auth::user()->orders->count() : 0 }} đơn hàng
+                                    </dd>
                                 </div>
                             </dl>
                         </div>

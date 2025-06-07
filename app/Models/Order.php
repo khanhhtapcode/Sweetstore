@@ -51,12 +51,18 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
-    // Relationship: Một đơn hàng có nhiều sản phẩm
+    // Relationship: Một đơn hàng có nhiều sản phẩm qua bảng order_items
     public function products()
     {
         return $this->belongsToMany(Product::class, 'order_items')
             ->withPivot('quantity', 'price')
             ->withTimestamps();
+    }
+
+    // Relationship: Một đơn hàng có nhiều order items
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class);
     }
 
     // Accessor để lấy tên trạng thái

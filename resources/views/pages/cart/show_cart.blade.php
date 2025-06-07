@@ -292,11 +292,11 @@
             <h3>THÔNG TIN ĐƠN HÀNG</h3>
             <p>Bạn có <strong id="cart-count">{{ $cartItems->count() }}</strong> sản phẩm trong giỏ hàng</p>
             @php
-            $total = $cartItems->sum(function ($item) {
-            return $item->quantity * $item->price;
-            });
-            $shipping = ($total >= 500000) ? 0 : 30000;
-            $final = $total + $shipping;
+                $total = $cartItems->sum(function ($item) {
+                    return $item->quantity * $item->price;
+                });
+                $shipping = ($total >= 500000) ? 0 : 30000;
+                $final = $total + $shipping;
             @endphp
             <ul>
                 <li>Tạm tính: <span id="temp-total">{{ number_format($total, 0, ',', '.') }}</span>đ</li>
@@ -304,12 +304,7 @@
                 <li>VAT: Đã bao gồm</li>
             </ul>
             <div class="total-price">Tổng cộng: <span id="final-total">{{ number_format($final, 0, ',', '.') }}</span>đ</div>
-
-            <form action="#" method="POST">
-                @csrf
-                <input type="hidden" name="total" value="{{ $final }}">
-                <button type="submit" class="checkout-btn">Thanh toán</button>
-            </form>
+            <a href="{{ route('checkout.show') }}" class="checkout-btn">Thanh toán</a>
         </div>
     </div>
     @endif

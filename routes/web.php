@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Middleware\RedirectAdminMiddleware;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RatingController;
@@ -17,9 +18,9 @@ Route::get('/', function () {
 })->name('home');
 
 // User Dashboard
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified', RedirectAdminMiddleware::class])->name('dashboard');
+Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified', RedirectAdminMiddleware::class])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -37,8 +38,22 @@ Route::middleware('auth')->group(function () {
     Route::post('/add-to-cart', [CartController::class, 'add_to_cart'])->name('cart.add');
     Route::get('/show-cart', [CartController::class, 'show_cart'])->name('cart.show_cart');
     Route::post('/update-cart', [CartController::class, 'update_cart'])->name('cart.update');
-    Route::post('/update-cart1', [CartController::class, 'update_cart1'])->name('cart.update1');
     Route::post('/delete-cart/{productId}', [CartController::class, 'delete_from_cart'])->name('cart.delete');
+    Route::get('/cart/overlay', [CartController::class, 'overlay'])->name('cart.overlay');
+});
+
+// Checkout Routes
+Route::middleware('auth')->group(function () {
+    Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout.show');
+    Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
+    Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])->name('checkout.success');
+});
+
+// Order Routes - Customer
+Route::middleware('auth')->group(function () {
+    Route::get('/orders', [CheckoutController::class, 'orderHistory'])->name('orders.history');
+    Route::get('/orders/{order}', [CheckoutController::class, 'orderDetail'])->name('orders.detail');
+    Route::patch('/orders/{order}/cancel', [CheckoutController::class, 'cancelOrder'])->name('orders.cancel');
 });
 
 // Rating Routes

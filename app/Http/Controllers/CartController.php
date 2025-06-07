@@ -19,14 +19,14 @@ class CartController extends Controller
         }
 
         $category_product = DB::table('categories')->orderBy('id', 'desc')->get();
-        
+
         // Lấy danh sách sản phẩm trong giỏ hàng của người dùng
         $cartItems = CartItem::where('user_id', Auth::id())->get();
-        
+
         // Lấy danh sách sản phẩm đang active có trong giỏ hàng
         $productIds = $cartItems->pluck('product_id')->toArray();
         $products = Product::whereIn('id', $productIds)->where('is_active', 1)->get();
-        
+
         // Tính tổng tiền
         $totalPrice = $cartItems->sum(function ($item) {
             return $item->quantity * $item->price;
@@ -68,8 +68,8 @@ class CartController extends Controller
 
         // Kiểm tra sản phẩm đã có trong giỏ hàng chưa
         $cartItem = CartItem::where('user_id', Auth::id())
-                            ->where('product_id', $product->id)
-                            ->first();
+            ->where('product_id', $product->id)
+            ->first();
 
         if ($cartItem) {
             // Cập nhật số lượng nếu sản phẩm đã có trong giỏ
@@ -125,8 +125,8 @@ class CartController extends Controller
         $action = $request->input('action');
 
         $cartItem = CartItem::where('user_id', Auth::id())
-                            ->where('product_id', $productId)
-                            ->first();
+            ->where('product_id', $productId)
+            ->first();
 
         if (!$cartItem) {
             return response()->json([
@@ -173,6 +173,7 @@ class CartController extends Controller
             'success' => true,
             'message' => 'Cập nhật giỏ hàng thành công!',
             'cartCount' => $cartItems->count(),
+            'totalPrice' => $totalPrice,
             'cartHtml' => view('pages.cart.overlay', compact('cartItems', 'totalPrice'))->render(),
         ]);
     }
@@ -188,8 +189,8 @@ class CartController extends Controller
         }
 
         $cartItem = CartItem::where('user_id', Auth::id())
-                            ->where('product_id', $productId)
-                            ->first();
+            ->where('product_id', $productId)
+            ->first();
 
         if (!$cartItem) {
             return response()->json([
@@ -209,6 +210,7 @@ class CartController extends Controller
             'success' => true,
             'message' => 'Xóa sản phẩm thành công!',
             'cartCount' => $cartItems->count(),
+            'totalPrice' => $totalPrice,
             'cartHtml' => view('pages.cart.overlay', ['cartItems' => $cartItems, 'totalPrice' => $totalPrice])->render(),
         ]);
     }
@@ -233,5 +235,42 @@ class CartController extends Controller
             'cartHtml' => view('pages.cart.overlay', compact('cartItems', 'totalPrice'))->render(),
             'cartCount' => $cartItems->count(),
         ]);
+    }
+
+    // Hủy đơn hàng
+    public function cancelOrder($orderId)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Vui lòng đăng nhập.');
+        }
+
+        $order = Order::where('id', $orderId)
+            ->where('user_id', Auth::id())
+            ->where('status', 'pending')
+            ->first();
+
+        if (!$order) {
+            return redirect()->back()->with('error', 'Không thể hủy đơn hàng này.');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Hoàn lại tồn kho
+            foreach ($order->orderItems as $item) {
+                $product = Product::find($item->product_id);
+                if ($product) {
+                    $product->increment('stock_quantity', $item->quantity);
+                }
+            }
+
+            // Cập nhật trạng thái đơn hàng
+            $order->update(['status' => 'cancelled']);
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Đã hủy đơn hàng thành công.');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()->with('error', 'Có lỗi xảy ra khi hủy đơn hàng.');
+        }
     }
 }
