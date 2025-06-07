@@ -77,21 +77,59 @@
                 </div>
             </div>
 
-            <!-- User Orders (if any) - ĐÃ SỬA LỖI -->
+            <!-- User Orders (if any) - ĐÃ SỬA LỖI VÀ THÊM BUTTON -->
             @if($user_orders && $user_orders->count() > 0)
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
-                        <h4 class="text-lg font-semibold text-gray-900 mb-4">Đơn Hàng Gần Đây</h4>
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-lg font-semibold text-gray-900">📦 Đơn Hàng Gần Đây</h4>
+                            <a href="{{ route('orders.history') }}"
+                               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition duration-300">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                </svg>
+                                Xem tất cả đơn hàng
+                            </a>
+                        </div>
                         <div class="space-y-3">
                             @foreach($user_orders as $order)
-                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                                    <div>
-                                        <p class="font-semibold text-gray-900">{{ $order->order_number ?? 'N/A' }}</p>
-                                        <p class="text-sm text-gray-600">{{ $order->created_at ? $order->created_at->format('d/m/Y H:i') : 'N/A' }}</p>
+                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition duration-300">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-3">
+                                            <div>
+                                                <p class="font-semibold text-gray-900">
+                                                    📋 {{ $order->order_number ?? 'N/A' }}
+                                                </p>
+                                                <p class="text-sm text-gray-600">
+                                                    🗓️ {{ $order->created_at ? $order->created_at->format('d/m/Y H:i') : 'N/A' }}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Hiển thị một vài sản phẩm trong đơn hàng -->
+                                        @if($order->orderItems && $order->orderItems->count() > 0)
+                                            <div class="mt-2">
+                                                <p class="text-xs text-gray-500 mb-1">Sản phẩm:</p>
+                                                <div class="flex flex-wrap gap-1">
+                                                    @foreach($order->orderItems->take(2) as $item)
+                                                        <span class="inline-block bg-white px-2 py-1 rounded text-xs text-gray-700 border">
+                                                            {{ $item->product ? $item->product->name : 'Sản phẩm đã xóa' }}
+                                                            (x{{ $item->quantity }})
+                                                        </span>
+                                                    @endforeach
+                                                    @if($order->orderItems->count() > 2)
+                                                        <span class="inline-block bg-gray-200 px-2 py-1 rounded text-xs text-gray-600">
+                                                            +{{ $order->orderItems->count() - 2 }} khác
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endif
                                     </div>
-                                    <div class="text-right">
-                                        <p class="font-semibold text-gray-900">
-                                            {{ $order->total_amount ? number_format($order->total_amount, 0, ',', '.') . ' VNĐ' : '0 VNĐ' }}
+
+                                    <div class="text-right ml-4">
+                                        <p class="font-semibold text-lg text-blue-600 mb-1">
+                                            💰 {{ $order->total_amount ? number_format($order->total_amount, 0, ',', '.') . ' VNĐ' : '0 VNĐ' }}
                                         </p>
                                         @php
                                             $statusClasses = [
@@ -113,12 +151,42 @@
                                             $statusClass = $statusClasses[$order->status] ?? 'bg-gray-100 text-gray-800';
                                             $statusName = $statusNames[$order->status] ?? 'Không xác định';
                                         @endphp
-                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $statusClass }}">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $statusClass }} mb-2">
                                             {{ $statusName }}
                                         </span>
+
+                                        <!-- Button xem chi tiết -->
+                                        <div>
+                                            <a href="{{ route('orders.detail', $order->id) }}"
+                                               class="inline-flex items-center px-3 py-1 bg-gray-600 text-white text-xs font-medium rounded hover:bg-gray-700 transition duration-300">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                </svg>
+                                                Chi tiết
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             @endforeach
+                        </div>
+
+                        <!-- Thông tin tổng quan về đơn hàng -->
+                        @php
+                            $totalOrders = Auth::user()->orders ? Auth::user()->orders->count() : 0;
+                            $pendingOrders = Auth::user()->orders ? Auth::user()->orders->where('status', 'pending')->count() : 0;
+                        @endphp
+                        <div class="mt-4 pt-4 border-t border-gray-200">
+                            <div class="grid grid-cols-2 gap-4 text-center">
+                                <div class="bg-blue-50 rounded-lg p-3">
+                                    <p class="text-sm text-gray-600">Tổng đơn hàng</p>
+                                    <p class="text-xl font-bold text-blue-600">{{ $totalOrders }}</p>
+                                </div>
+                                <div class="bg-yellow-50 rounded-lg p-3">
+                                    <p class="text-sm text-gray-600">Đang chờ xử lý</p>
+                                    <p class="text-xl font-bold text-yellow-600">{{ $pendingOrders }}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -128,7 +196,7 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-4">
-                        <h4 class="text-lg font-semibold text-gray-900">Sản Phẩm Nổi Bật</h4>
+                        <h4 class="text-lg font-semibold text-gray-900">🌟 Sản Phẩm Nổi Bật</h4>
                         <a href="{{ route('products.index') }}" class="text-pink-600 hover:text-pink-800 text-sm font-medium">
                             Xem tất cả →
                         </a>
@@ -178,7 +246,7 @@
             <!-- Account Info -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mt-6">
                 <div class="p-6">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4">Thông Tin Tài Khoản</h4>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4">👤 Thông Tin Tài Khoản</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <dl class="space-y-2">
@@ -221,10 +289,16 @@
                     </div>
 
                     <div class="mt-6 pt-6 border-t border-gray-200">
-                        <a href="{{ route('profile.edit') }}"
-                           class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-300">
-                            Chỉnh Sửa Thông Tin
-                        </a>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <a href="{{ route('profile.edit') }}"
+                               class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-300 text-center">
+                                ✏️ Chỉnh Sửa Thông Tin
+                            </a>
+                            <a href="{{ route('orders.history') }}"
+                               class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition duration-300 text-center">
+                                📋 Xem Đơn Hàng
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -838,7 +838,7 @@
                 <p class="text-gray-600 leading-relaxed">
                     <strong>Thứ 2 - Thứ 7:</strong> 8:00 - 22:00<br>
                     <strong>Chủ Nhật:</strong> 9:00 - 21:00<br>
-                    <span class="text-pink-600 font-medium">Giao hàng miễn phí từ 200k</span>
+                    <span class="text-pink-600 font-medium">Giao hàng miễn phí từ 500k</span>
                 </p>
             </div>
         </div>
@@ -1022,7 +1022,7 @@
             <p>© 2024 Sweet Delights. Tất cả quyền được bảo lưu. Thiết kế bởi Family Guys Team.</p>
         </div>
     </div>
-    <logir>
+</footer>
 
         <script>
             let isCartActionRunning = false;
