@@ -74,7 +74,16 @@
                     Người Dùng
                 </a>
             </div>
-
+            <div class="px-6 py-3">
+                <a href="{{ route('admin.drivers.index') }}"
+                   class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md transition duration-200 {{ request()->routeIs('admin.drivers.*') ? 'bg-gray-700 text-white' : '' }}">
+                    <svg class="mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0M15 17a2 2 0 104 0M9 17h6" />
+                    </svg>
+                    Tài Xế
+                </a>
+            </div>
             <div class="border-t border-gray-700 mt-6 pt-6">
                 <div class="px-6 py-3">
                     <a href="{{ route('products.index') }}"

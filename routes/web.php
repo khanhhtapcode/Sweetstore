@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\DriverController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Middleware\RedirectAdminMiddleware;
@@ -66,29 +67,54 @@ Route::post('/ratings/{rating}/replies', [RatingReplyController::class, 'store']
 
 // Admin Routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/', function () {
-        return view('admin.dashboard');
-    })->name('dashboard');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('categories', CategoryController::class);
     Route::resource('products', AdminProductController::class);
     Route::resource('orders', OrderController::class);
     Route::resource('users', UserController::class);
+    Route::resource('drivers', DriverController::class);
 
+    // Order routes - Status và delivery
     Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
+    Route::patch('orders/{order}/delivery-status', [OrderController::class, 'updateDeliveryStatus'])->name('orders.update-delivery-status');
+
+    // Order - Driver Assignment
+    Route::post('orders/{order}/assign-driver', [OrderController::class, 'assignDriver'])->name('orders.assign-driver');
+    Route::delete('orders/{order}/unassign-driver', [OrderController::class, 'unassignDriver'])->name('orders.unassign-driver');
+    Route::get('orders/{order}/suggested-drivers', [OrderController::class, 'getSuggestedDrivers'])->name('orders.suggested-drivers');
+
+    // Order - Bulk Actions
+    Route::post('orders/bulk-action', [OrderController::class, 'bulkAction'])->name('orders.bulk-action');
+    Route::post('orders/auto-assign-drivers', [OrderController::class, 'autoAssignDrivers'])->name('orders.auto-assign-drivers'); // ADDED THIS
+    Route::get('orders/export', [OrderController::class, 'export'])->name('orders.export');
+    Route::get('orders/{order}/invoice', [OrderController::class, 'printInvoice'])->name('orders.invoice');
+
+    // Product routes
     Route::post('products/{product}/update-stock', [AdminProductController::class, 'updateStock'])->name('products.update-stock');
     Route::post('products/{product}/toggle-active', [AdminProductController::class, 'toggleActive'])->name('products.toggle-active');
     Route::post('products/{product}/toggle-featured', [AdminProductController::class, 'toggleFeatured'])->name('products.toggle-featured');
     Route::post('products/bulk-action', [AdminProductController::class, 'bulkAction'])->name('products.bulk-action');
     Route::get('products/export', [AdminProductController::class, 'export'])->name('products.export');
+
+    // User routes
     Route::post('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
     Route::post('users/{user}/change-role', [UserController::class, 'changeRole'])->name('users.change-role');
 
-    // Các route API mới cho Dashboard
+    // Driver routes
+    Route::post('drivers/{driver}/toggle-status', [DriverController::class, 'toggleStatus'])->name('drivers.toggle-status');
+    Route::post('drivers/{driver}/assign-order', [DriverController::class, 'assignToOrder'])->name('drivers.assign-order');
+    Route::get('drivers/available', [DriverController::class, 'getAvailableDrivers'])->name('drivers.available');
+    Route::post('drivers/bulk-action', [DriverController::class, 'bulkAction'])->name('drivers.bulk-action');
+    Route::get('drivers/export', [DriverController::class, 'export'])->name('drivers.export');
+    Route::get('drivers/performance', [DriverController::class, 'performanceReport'])->name('drivers.performance');
+
+    // Dashboard API routes
     Route::get('/dashboard/revenue-data', [DashboardController::class, 'revenueData'])->name('dashboard.revenue-data');
     Route::get('/dashboard/top-products', [DashboardController::class, 'topProducts'])->name('dashboard.top-products');
     Route::get('/dashboard/top-customers', [DashboardController::class, 'topCustomers'])->name('dashboard.top-customers');
     Route::get('/dashboard/order-status-data', [DashboardController::class, 'getOrderStatusData'])->name('dashboard.order-status-data');
+    Route::get('/dashboard/driver-performance', [DashboardController::class, 'getDriverPerformance'])->name('dashboard.driver-performance');
 });
 
 // Chatbot Route
