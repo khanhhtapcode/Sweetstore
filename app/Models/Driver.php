@@ -134,14 +134,17 @@ class Driver extends Model
         return $query->where('status', self::STATUS_ACTIVE);
     }
 
-    // FIXED: Scope để lấy tài xế có thể nhận đơn (active và không quá 3 đơn)
+    // FIXED: Scope để lấy tài xế có thể nhận đơn (active và không quá 2 đơn)
     public function scopeAvailable($query)
     {
         return $query->where('status', self::STATUS_ACTIVE)
-            ->where(function($q) {
-                $q->whereDoesntHave('currentOrders')
-                    ->orWhereHas('currentOrders', function($subQuery) {
-                        $subQuery->havingRaw('COUNT(*) < 3');
+            ->whereHas('orders', function($subQuery) {
+                $subQuery->whereIn('status', ['assigned', 'picked_up', 'delivering']);
+            }, '<', 2)
+            ->orWhere(function($q) {
+                $q->where('status', self::STATUS_ACTIVE)
+                    ->whereDoesntHave('orders', function($subQuery) {
+                        $subQuery->whereIn('status', ['assigned', 'picked_up', 'delivering']);
                     });
             });
     }
@@ -216,7 +219,9 @@ class Driver extends Model
         }
     }
 
-    // FIXED: Kiểm tra xem tài xế có thể nhận thêm đơn không
+    /**
+     * FIXED: Kiểm tra xem tài xế có thể nhận thêm đơn không
+     */
     public function canTakeNewOrder()
     {
         // Kiểm tra status active
@@ -229,8 +234,10 @@ class Driver extends Model
             return false;
         }
 
-        // Kiểm tra số đơn hiện tại (load fresh data)
-        $currentOrdersCount = $this->currentOrders()->count();
+        // Kiểm tra số đơn hiện tại - sử dụng fresh query
+        $currentOrdersCount = Order::where('driver_id', $this->id)
+            ->whereIn('status', ['assigned', 'picked_up', 'delivering'])
+            ->count();
 
         return $currentOrdersCount < 3;
     }

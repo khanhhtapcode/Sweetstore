@@ -818,48 +818,38 @@ class OrderController extends Controller
     /**
      * Find the best available driver for an order - FIXED VERSION
      */
+    /**
+     * Find the best available driver for an order - COMPLETELY FIXED
+     */
     private function findBestDriver($totalWeight, $totalVolume, $deliveryAddress)
     {
-        // Xác định loại xe cần thiết dựa trên trọng lượng và thể tích
+        // Xác định loại xe cần thiết
         $requiredVehicleType = $this->determineRequiredVehicleType($totalWeight, $totalVolume);
 
-        // FIXED: Query đúng cách không vi phạm ONLY_FULL_GROUP_BY
-        $availableDrivers = Driver::select('drivers.*')
-            ->where('status', Driver::STATUS_ACTIVE)
+        // FIXED: Query đơn giản, tránh hoàn toàn lỗi GROUP BY
+        $drivers = Driver::where('status', Driver::STATUS_ACTIVE)
             ->where('vehicle_type', $requiredVehicleType)
-            ->whereDoesntHave('orders', function($query) {
-                $query->whereIn('status', ['assigned', 'picked_up', 'delivering']);
-            })
-            ->orWhereHas('orders', function($query) {
-                $query->whereIn('status', ['assigned', 'picked_up', 'delivering'])
-                    ->havingRaw('COUNT(*) < 3');
-            })
-            ->withCount(['orders as current_orders_count' => function($query) {
-                $query->whereIn('status', ['assigned', 'picked_up', 'delivering']);
-            }])
             ->get();
 
+        // Lọc tài xế có thể nhận đơn bằng PHP
+        $availableDrivers = $drivers->filter(function($driver) {
+            return $driver->canTakeNewOrder();
+        });
+
+        // Nếu không có tài xế phù hợp, thử loại xe lớn hơn
         if ($availableDrivers->isEmpty()) {
-            // Nếu không có xe phù hợp, thử xe lớn hơn
             $fallbackVehicles = ['motorbike', 'small_truck', 'van'];
             $currentIndex = array_search($requiredVehicleType, $fallbackVehicles);
 
             if ($currentIndex !== false) {
                 for ($i = $currentIndex + 1; $i < count($fallbackVehicles); $i++) {
-                    $availableDrivers = Driver::select('drivers.*')
-                        ->where('status', Driver::STATUS_ACTIVE)
+                    $drivers = Driver::where('status', Driver::STATUS_ACTIVE)
                         ->where('vehicle_type', $fallbackVehicles[$i])
-                        ->whereDoesntHave('orders', function($query) {
-                            $query->whereIn('status', ['assigned', 'picked_up', 'delivering']);
-                        })
-                        ->orWhereHas('orders', function($query) {
-                            $query->whereIn('status', ['assigned', 'picked_up', 'delivering'])
-                                ->havingRaw('COUNT(*) < 3');
-                        })
-                        ->withCount(['orders as current_orders_count' => function($query) {
-                            $query->whereIn('status', ['assigned', 'picked_up', 'delivering']);
-                        }])
                         ->get();
+
+                    $availableDrivers = $drivers->filter(function($driver) {
+                        return $driver->canTakeNewOrder();
+                    });
 
                     if ($availableDrivers->isNotEmpty()) {
                         break;
@@ -872,20 +862,11 @@ class OrderController extends Controller
             return null;
         }
 
-        // Lọc lại bằng method canTakeNewOrder() để double-check
-        $availableDrivers = $availableDrivers->filter(function($driver) {
-            return $driver->canTakeNewOrder();
-        });
-
-        if ($availableDrivers->isEmpty()) {
-            return null;
-        }
-
         // Sắp xếp theo: số đơn hiện tại (ít hơn) -> rating (cao hơn)
-        return $availableDrivers->sortBy([
-            ['current_orders_count', 'asc'],
-            ['rating', 'desc']
-        ])->first();
+        return $availableDrivers->sortBy(function($driver) {
+            $currentOrdersCount = $driver->currentOrders()->count();
+            return [$currentOrdersCount, -$driver->rating]; // Âm để sort rating DESC
+        })->first();
     }
 
     /**

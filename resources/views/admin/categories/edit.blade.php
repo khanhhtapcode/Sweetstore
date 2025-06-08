@@ -1,209 +1,134 @@
-{{-- resources/views/admin/categories/edit.blade.php --}}
 <x-admin-layout>
     <x-slot name="header">
-        Chỉnh Sửa Danh Mục
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                Chỉnh Sửa Danh Mục
+            </h2>
+            <a href="{{ route('admin.categories.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                ← Quay Lại
+            </a>
+        </div>
     </x-slot>
 
-@section('title', 'Chỉnh Sửa Danh Mục')
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-gray-900">
+                    @if ($errors->any())
+                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
-@section('content')
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h3 class="card-title">Chỉnh Sửa Danh Mục</h3>
-                        <a href="{{ route('admin.categories.index') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Quay Lại
-                        </a>
-                    </div>
+                    <form action="{{ route('admin.categories.update', $category->id) }}" method="POST">
+                        @csrf
+                        @method('PUT')
 
-                    <div class="card-body">
-                        @if ($errors->any())
-                            <div class="alert alert-danger">
-                                <ul class="mb-0">
-                                    @foreach ($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @endif
-
-                        <form action="{{ route('admin.categories.update', $category->id) }}" method="POST" enctype="multipart/form-data">
-                            @csrf
-                            @method('PUT')
-
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <div class="form-group">
-                                        <label for="name">Tên Danh Mục <span class="text-danger">*</span></label>
-                                        <input type="text"
-                                               class="form-control @error('name') is-invalid @enderror"
-                                               id="name"
-                                               name="name"
-                                               value="{{ old('name', $category->name) }}"
-                                               required>
-                                        @error('name')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="slug">Slug</label>
-                                        <input type="text"
-                                               class="form-control @error('slug') is-invalid @enderror"
-                                               id="slug"
-                                               name="slug"
-                                               value="{{ old('slug', $category->slug) }}">
-                                        @error('slug')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                        <small class="form-text text-muted">Để trống để tự động tạo từ tên danh mục</small>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="description">Mô Tả</label>
-                                        <textarea class="form-control @error('description') is-invalid @enderror"
-                                                  id="description"
-                                                  name="description"
-                                                  rows="4">{{ old('description', $category->description) }}</textarea>
-                                        @error('description')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="parent_id">Danh Mục Cha</label>
-                                        <select class="form-control @error('parent_id') is-invalid @enderror"
-                                                id="parent_id"
-                                                name="parent_id">
-                                            <option value="">-- Không có danh mục cha --</option>
-                                            @foreach($categories as $cat)
-                                                @if($cat->id != $category->id)
-                                                    <option value="{{ $cat->id }}"
-                                                        {{ old('parent_id', $category->parent_id) == $cat->id ? 'selected' : '' }}>
-                                                        {{ $cat->name }}
-                                                    </option>
-                                                @endif
-                                            @endforeach
-                                        </select>
-                                        @error('parent_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <div class="mb-4">
+                                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Tên Danh Mục <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('name') border-red-500 @enderror"
+                                           id="name"
+                                           name="name"
+                                           value="{{ old('name', $category->name) }}"
+                                           required>
+                                    @error('name')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                    @enderror
                                 </div>
 
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="image">Hình Ảnh</label>
-                                        <input type="file"
-                                               class="form-control-file @error('image') is-invalid @enderror"
-                                               id="image"
-                                               name="image"
-                                               accept="image/*">
-                                        @error('image')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
+                                <div class="mb-4">
+                                    <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Mô Tả
+                                    </label>
+                                    <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('description') border-red-500 @enderror"
+                                              id="description"
+                                              name="description"
+                                              rows="4">{{ old('description', $category->description) }}</textarea>
+                                    @error('description')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
 
-                                        @if($category->image)
-                                            <div class="mt-2">
-                                                <p class="mb-1">Hình ảnh hiện tại:</p>
-                                                <img src="{{ asset('storage/categories/' . $category->image) }}"
-                                                     alt="{{ $category->name }}"
-                                                     class="img-thumbnail"
-                                                     style="max-width: 200px;">
-                                            </div>
-                                        @endif
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="sort_order">Thứ Tự Sắp Xếp</label>
-                                        <input type="number"
-                                               class="form-control @error('sort_order') is-invalid @enderror"
-                                               id="sort_order"
-                                               name="sort_order"
-                                               value="{{ old('sort_order', $category->sort_order ?? 0) }}"
-                                               min="0">
-                                        @error('sort_order')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-
-                                    <div class="form-group">
-                                        <div class="custom-control custom-switch">
-                                            <input type="checkbox"
-                                                   class="custom-control-input"
-                                                   id="is_active"
-                                                   name="is_active"
-                                                   value="1"
-                                                {{ old('is_active', $category->is_active) ? 'checked' : '' }}>
-                                            <label class="custom-control-label" for="is_active">Kích Hoạt</label>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <div class="custom-control custom-switch">
-                                            <input type="checkbox"
-                                                   class="custom-control-input"
-                                                   id="show_in_menu"
-                                                   name="show_in_menu"
-                                                   value="1"
-                                                {{ old('show_in_menu', $category->show_in_menu) ? 'checked' : '' }}>
-                                            <label class="custom-control-label" for="show_in_menu">Hiển Thị Trong Menu</label>
-                                        </div>
-                                    </div>
+                                <div class="mb-4">
+                                    <label for="image_url" class="block text-sm font-medium text-gray-700 mb-2">
+                                        URL Hình Ảnh
+                                    </label>
+                                    <input type="url"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('image_url') border-red-500 @enderror"
+                                           id="image_url"
+                                           name="image_url"
+                                           value="{{ old('image_url', $category->image_url) }}"
+                                           placeholder="https://example.com/image.jpg">
+                                    @error('image_url')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                    @enderror
                                 </div>
                             </div>
 
-                            <div class="form-group">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save"></i> Cập Nhật
-                                </button>
-                                <a href="{{ route('admin.categories.index') }}" class="btn btn-secondary">
-                                    <i class="fas fa-times"></i> Hủy
-                                </a>
+                            <div>
+                                <div class="mb-4">
+                                    <label class="flex items-center">
+                                        <input type="checkbox"
+                                               class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                               name="is_active"
+                                               value="1"
+                                            {{ old('is_active', $category->is_active) ? 'checked' : '' }}>
+                                        <span class="ml-2 text-sm text-gray-600">Kích hoạt danh mục</span>
+                                    </label>
+                                </div>
+
+                                @if($category->image_url)
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Hình Ảnh Hiện Tại
+                                        </label>
+                                        <img src="{{ $category->image_url }}"
+                                             alt="{{ $category->name }}"
+                                             class="w-32 h-32 object-cover rounded-lg border border-gray-300">
+                                    </div>
+                                @endif
+
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Thông Tin
+                                    </label>
+                                    <div class="bg-gray-50 p-4 rounded-lg">
+                                        <p class="text-sm text-gray-600 mb-2">
+                                            <strong>Số sản phẩm:</strong> {{ $category->products_count ?? 0 }}
+                                        </p>
+                                        <p class="text-sm text-gray-600 mb-2">
+                                            <strong>Ngày tạo:</strong> {{ $category->created_at->format('d/m/Y H:i') }}
+                                        </p>
+                                        <p class="text-sm text-gray-600">
+                                            <strong>Cập nhật lần cuối:</strong> {{ $category->updated_at->format('d/m/Y H:i') }}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
-                        </form>
-                    </div>
+                        </div>
+
+                        <div class="flex justify-end space-x-4 mt-6">
+                            <a href="{{ route('admin.categories.index') }}"
+                               class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                                Hủy
+                            </a>
+                            <button type="submit"
+                                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                Cập Nhật Danh Mục
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
-@endsection
-
-@section('scripts')
-    <script>
-        $(document).ready(function() {
-            // Auto generate slug from name
-            $('#name').on('input', function() {
-                var name = $(this).val();
-                var slug = name.toLowerCase()
-                    .replace(/[^a-z0-9\s-]/g, '')
-                    .replace(/\s+/g, '-')
-                    .replace(/-+/g, '-')
-                    .trim('-');
-                $('#slug').val(slug);
-            });
-
-            // Preview image on change
-            $('#image').on('change', function() {
-                var file = this.files[0];
-                if (file) {
-                    var reader = new FileReader();
-                    reader.onload = function(e) {
-                        // Remove existing preview
-                        $('.image-preview').remove();
-
-                        // Add new preview
-                        var preview = $('<div class="image-preview mt-2">' +
-                            '<p class="mb-1">Hình ảnh mới:</p>' +
-                            '<img src="' + e.target.result + '" class="img-thumbnail" style="max-width: 200px;">' +
-                            '</div>');
-                        $('#image').parent().append(preview);
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-        });
-    </script>
 </x-admin-layout>

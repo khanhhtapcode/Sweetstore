@@ -4,10 +4,16 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Quản Lý Danh Mục') }}
             </h2>
-            <a href="{{ route('admin.categories.create') }}"
-               class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                Thêm Danh Mục Mới
-            </a>
+            <div class="flex space-x-4">
+                <a href="{{ route('admin.categories.export', request()->query()) }}"
+                   class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                    📊 Xuất Excel
+                </a>
+                <a href="{{ route('admin.categories.create') }}"
+                   class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Thêm Danh Mục Mới
+                </a>
+            </div>
         </div>
     </x-slot>
 

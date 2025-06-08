@@ -70,6 +70,12 @@ Route::post('/ratings/{rating}/replies', [RatingReplyController::class, 'store']
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
+    // *** EXPORT ROUTES ***
+    Route::get('products/export', [AdminProductController::class, 'export'])->name('products.export');
+    Route::get('categories/export', [CategoryController::class, 'export'])->name('categories.export');
+    Route::get('drivers/export', [DriverController::class, 'export'])->name('drivers.export');
+    Route::get('orders/export', [OrderController::class, 'export'])->name('orders.export');
+    // Resource routes export routes
     Route::resource('categories', CategoryController::class);
     Route::resource('products', AdminProductController::class);
     Route::resource('orders', OrderController::class);

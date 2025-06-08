@@ -221,6 +221,108 @@ class ProductController extends Controller
         return redirect()->route('admin.products.index')
             ->with('success', "Sản phẩm '{$productName}' đã được xóa thành công!");
     }
+    /**
+     * Export products to Excel
+     */
+    /**
+     * Export products to CSV
+     */
+    public function export(Request $request)
+    {
+        try {
+            $query = Product::with('category');
+
+            // Apply filters
+            if ($request->filled('search')) {
+                $searchTerm = $request->search;
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('name', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('description', 'like', '%' . $searchTerm . '%');
+                });
+            }
+
+            if ($request->filled('category')) {
+                $query->where('category_id', $request->category);
+            }
+
+            if ($request->filled('status')) {
+                switch ($request->status) {
+                    case 'active':
+                        $query->where('is_active', true);
+                        break;
+                    case 'inactive':
+                        $query->where('is_active', false);
+                        break;
+                    case 'featured':
+                        $query->where('is_featured', true);
+                        break;
+                    case 'low_stock':
+                        $query->where('stock_quantity', '<=', 5);
+                        break;
+                }
+            }
+
+            $products = $query->latest()->get();
+
+            $filename = 'san_pham_' . date('Y-m-d_H-i-s') . '.csv';
+
+            $headers = [
+                'Content-Type' => 'text/csv; charset=utf-8',
+                'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+                'Pragma' => 'no-cache',
+                'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+                'Expires' => '0'
+            ];
+
+            $callback = function() use ($products) {
+                $file = fopen('php://output', 'w');
+
+                // Add UTF-8 BOM for Excel compatibility
+                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+                // CSV Headers
+                fputcsv($file, [
+                    'ID',
+                    'Tên sản phẩm',
+                    'Danh mục',
+                    'Mô tả',
+                    'Giá (VNĐ)',
+                    'Tồn kho',
+                    'Trọng lượng (kg)',
+                    'Thể tích (m³)',
+                    'Trạng thái',
+                    'Nổi bật',
+                    'Ngày tạo',
+                    'Ngày cập nhật'
+                ]);
+
+                foreach ($products as $product) {
+                    fputcsv($file, [
+                        $product->id,
+                        $product->name,
+                        $product->category->name ?? 'Chưa phân loại',
+                        strip_tags($product->description ?? ''),
+                        number_format($product->price, 0, ',', '.'),
+                        $product->stock_quantity ?? 0,
+                        $product->weight ?? 0.5,
+                        $product->volume ?? 0.01,
+                        $product->is_active ? 'Hoạt động' : 'Tạm dừng',
+                        $product->is_featured ? 'Có' : 'Không',
+                        $product->created_at->format('d/m/Y H:i'),
+                        $product->updated_at->format('d/m/Y H:i')
+                    ]);
+                }
+
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+
+        } catch (\Exception $e) {
+            \Log::error('Export products error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Có lỗi xảy ra khi xuất file: ' . $e->getMessage());
+        }
+    }
 
     /**
      * Update product stock quantity
@@ -327,58 +429,5 @@ class ProductController extends Controller
 
         return redirect()->route('admin.products.index')
             ->with('success', $message);
-    }
-
-    /**
-     * Export products to CSV
-     */
-    public function export()
-    {
-        $products = Product::with('category')->get();
-
-        $filename = 'products_' . date('Y-m-d_H-i-s') . '.csv';
-
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ];
-
-        $callback = function() use ($products) {
-            $file = fopen('php://output', 'w');
-
-            // Add UTF-8 BOM for Excel compatibility
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-
-            // CSV Headers
-            fputcsv($file, [
-                'ID',
-                'Tên sản phẩm',
-                'Mô tả',
-                'Giá',
-                'Danh mục',
-                'Số lượng tồn kho',
-                'Nổi bật',
-                'Trạng thái',
-                'Ngày tạo'
-            ]);
-
-            foreach ($products as $product) {
-                fputcsv($file, [
-                    $product->id,
-                    $product->name,
-                    $product->description,
-                    $product->price,
-                    $product->category->name ?? '',
-                    $product->stock_quantity,
-                    $product->is_featured ? 'Có' : 'Không',
-                    $product->is_active ? 'Hoạt động' : 'Tạm dừng',
-                    $product->created_at->format('d/m/Y H:i')
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
     }
 }

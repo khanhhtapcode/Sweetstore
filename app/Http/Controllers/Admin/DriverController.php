@@ -7,6 +7,8 @@ use App\Models\Driver;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Exports\DriversExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DriverController extends Controller
 {
@@ -223,18 +225,29 @@ class DriverController extends Controller
     }
 
     /**
-     * Get available drivers for assignment
+     * Get available drivers for AJAX
      */
-    public function getAvailableDrivers(Request $request)
+    public function getAvailableDrivers()
     {
-        $drivers = Driver::available()
-            ->whereHas('currentOrders', function($query) {
-                $query->havingRaw('COUNT(*) < 3');
-            }, '<', 3)
-            ->orWhereDoesntHave('currentOrders')
-            ->select('id', 'driver_code', 'name', 'phone', 'vehicle_type', 'status')
-            ->withCount('currentOrders')
-            ->get();
+        $drivers = Driver::where('status', Driver::STATUS_ACTIVE)
+            ->get()
+            ->filter(function($driver) {
+                return $driver->canTakeNewOrder();
+            })
+            ->map(function($driver) {
+                $currentOrdersCount = $driver->currentOrders()->count();
+                return [
+                    'id' => $driver->id,
+                    'name' => $driver->name,
+                    'driver_code' => $driver->driver_code,
+                    'vehicle_type' => $driver->vehicle_type,
+                    'vehicle_number' => $driver->vehicle_number,
+                    'status' => $driver->status,
+                    'rating' => $driver->rating,
+                    'current_orders_count' => $currentOrdersCount
+                ];
+            })
+            ->values();
 
         return response()->json($drivers);
     }
@@ -287,56 +300,88 @@ class DriverController extends Controller
     /**
      * Export drivers data
      */
+    /**
+     * Export drivers to Excel
+     */
+    /**
+     * Export drivers to CSV
+     */
     public function export(Request $request)
     {
-        $drivers = Driver::with('currentOrders', 'completedOrders')
-            ->get()
-            ->map(function($driver) {
-                return [
-                    'Mã tài xế' => $driver->driver_code,
-                    'Tên' => $driver->name,
-                    'Email' => $driver->email,
-                    'Điện thoại' => $driver->phone,
-                    'Địa chỉ' => $driver->address,
-                    'Số bằng lái' => $driver->license_number,
-                    'Hạn bằng lái' => $driver->license_expiry ? $driver->license_expiry->format('d/m/Y') : '',
-                    'Loại xe' => $driver->vehicle_type_name,
-                    'Biển số xe' => $driver->vehicle_number,
-                    'Trạng thái' => $driver->status_name,
-                    'Đánh giá' => $driver->formatted_rating,
-                    'Tổng đơn hàng' => $driver->total_deliveries,
-                    'Đơn hiện tại' => $driver->current_orders_count,
-                    'Ngày tạo' => $driver->created_at ? $driver->created_at->format('d/m/Y H:i') : '',
-                ];
-            });
+        try {
+            $query = Driver::withCount(['orders', 'currentOrders', 'completedOrders']);
 
-        $filename = 'drivers_' . date('Y-m-d_H-i-s') . '.csv';
-
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ];
-
-        $callback = function() use ($drivers) {
-            $file = fopen('php://output', 'w');
-
-            // BOM for UTF-8
-            fwrite($file, "\xEF\xBB\xBF");
-
-            // Headers
-            if ($drivers->isNotEmpty()) {
-                fputcsv($file, array_keys($drivers->first()));
+            // Apply filters
+            if ($request->filled('search')) {
+                $searchTerm = $request->search;
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('name', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('driver_code', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('phone', 'like', '%' . $searchTerm . '%');
+                });
             }
 
-            // Data
-            foreach ($drivers as $driver) {
-                fputcsv($file, $driver);
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
             }
 
-            fclose($file);
-        };
+            if ($request->filled('vehicle_type')) {
+                $query->where('vehicle_type', $request->vehicle_type);
+            }
 
-        return response()->stream($callback, 200, $headers);
+            $drivers = $query->latest()->get();
+
+            $filename = 'tai_xe_' . date('Y-m-d_H-i-s') . '.csv';
+
+            $headers = [
+                'Content-Type' => 'text/csv; charset=utf-8',
+                'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            ];
+
+            $callback = function() use ($drivers) {
+                $file = fopen('php://output', 'w');
+                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+                fputcsv($file, [
+                    'ID',
+                    'Mã tài xế',
+                    'Tên',
+                    'Email',
+                    'Số điện thoại',
+                    'Loại xe',
+                    'Biển số xe',
+                    'Trạng thái',
+                    'Đánh giá',
+                    'Tổng đơn hàng',
+                    'Đơn hiện tại',
+                    'Ngày tạo'
+                ]);
+
+                foreach ($drivers as $driver) {
+                    fputcsv($file, [
+                        $driver->id,
+                        $driver->driver_code,
+                        $driver->name,
+                        $driver->email,
+                        $driver->phone,
+                        $driver->vehicle_type_name,
+                        $driver->vehicle_number,
+                        $driver->status_name,
+                        $driver->formatted_rating,
+                        $driver->orders_count ?? 0,
+                        $driver->current_orders_count ?? 0,
+                        $driver->created_at->format('d/m/Y H:i')
+                    ]);
+                }
+
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Có lỗi xảy ra khi xuất file: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -405,4 +450,5 @@ class DriverController extends Controller
             })
             ->count();
     }
+
 }
