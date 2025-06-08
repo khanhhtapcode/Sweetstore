@@ -22,5 +22,5 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withCommands([
-        \App\Console\Commands\TestEmail::class,
+        \App\Console\Commands\TestPHPMailer::class,
     ])->create();

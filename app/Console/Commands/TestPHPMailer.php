@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Services\EmailService;
 
-class TestEmail extends Command
+class TestPHPMailer extends Command
 {
     protected $signature = 'test:email {email?}';
     protected $description = 'Test email sending';
