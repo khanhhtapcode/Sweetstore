@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 
 Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
@@ -39,10 +40,6 @@ Route::middleware('auth')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
 
-    Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
-        ->middleware(['signed', 'throttle:6,1'])
-        ->name('verification.verify');
-
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
         ->middleware('throttle:6,1')
         ->name('verification.send');
@@ -57,3 +54,53 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
 });
+
+// EMAIL VERIFICATION - Public route (KHÔNG CẦN AUTH)
+Route::get('verify-email/{id}/{hash}', function (Request $request, $id, $hash) {
+    try {
+        \Log::info('AUTH.PHP Email verification attempt', [
+            'id' => $id,
+            'hash' => $hash,
+            'url' => $request->fullUrl()
+        ]);
+
+        $user = \App\Models\User::find($id);
+
+        if (!$user) {
+            \Log::error('User not found: ' . $id);
+            return redirect()->route('login')->with('error', 'Người dùng không tồn tại!');
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            \Log::info('User already verified');
+            \Auth::login($user);
+
+            if ($user->isAdmin()) {
+                return redirect()->route('admin.dashboard')->with('verified', 'Email đã được xác thực!');
+            }
+            return redirect()->route('dashboard')->with('verified', 'Email đã được xác thực!');
+        }
+
+        $expectedHash = sha1($user->getEmailForVerification());
+        if ($expectedHash !== $hash) {
+            \Log::warning('Hash mismatch');
+            return redirect()->route('login')->with('error', 'Link xác thực không hợp lệ!');
+        }
+
+        $user->markEmailAsVerified();
+        \Auth::login($user);
+        $user->updateLastLogin();
+
+        \Log::info('Email verified successfully for user: ' . $user->id);
+
+        if ($user->isAdmin()) {
+            return redirect()->route('admin.dashboard')->with('verified', 'Email đã được xác thực thành công! 🎉');
+        }
+
+        return redirect()->route('dashboard')->with('verified', 'Email đã được xác thực thành công! 🎉');
+
+    } catch (\Exception $e) {
+        \Log::error('Email verification error: ' . $e->getMessage());
+        return redirect()->route('login')->with('error', 'Có lỗi xảy ra khi xác thực email!');
+    }
+})->middleware(['throttle:6,1'])->name('verification.verify');
