@@ -121,21 +121,27 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 // Chatbot Route
 Route::post('/chatbot/chat', [ChatbotController::class, 'chat'])->name('chatbot.chat');
 
-// Email Verification Routes - SỬ DỤNG CONTROLLER THAY VÌ CLOSURE
+// Email Verification Routes - KHỚP VỚI URL TRONG EMAIL
 Route::middleware('auth')->group(function () {
     // Hiển thị trang thông báo verify email
-    Route::get('email/verify', [App\Http\Controllers\Auth\EmailVerificationPromptController::class, '__invoke'])
-        ->name('verification.notice');
+    Route::get('/verify-email', function () {
+        return view('auth.verify-email');
+    })->name('verification.notice');
 
-    // Xử lý verification link (sử dụng controller)
-    Route::get('email/verify/{id}/{hash}', [App\Http\Controllers\Auth\VerifyEmailController::class, '__invoke'])
+    // Xử lý verification link - ĐÚNG PATTERN: /verify-email/{id}/{hash}
+    Route::get('/verify-email/{id}/{hash}', [App\Http\Controllers\Auth\VerifyEmailController::class, '__invoke'])
         ->middleware(['signed', 'throttle:6,1'])
         ->name('verification.verify');
 
     // Gửi lại verification email
-    Route::post('email/verification-notification', [App\Http\Controllers\Auth\EmailVerificationNotificationController::class, 'store'])
-        ->middleware(['throttle:6,1'])
-        ->name('verification.send');
+    Route::post('/email/verification-notification', function (Request $request) {
+        if ($request->user()->hasVerifiedEmail()) {
+            return redirect()->route('dashboard');
+        }
+
+        $request->user()->sendEmailVerificationNotification();
+        return back()->with('status', 'verification-link-sent');
+    })->middleware(['throttle:6,1'])->name('verification.send');
 });
 
 require __DIR__ . '/auth.php';
