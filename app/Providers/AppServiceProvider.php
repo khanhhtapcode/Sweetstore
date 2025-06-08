@@ -25,10 +25,5 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }
-
-        // Sửa cách đăng ký channel - không dùng static
-        $this->app->make(ChannelManager::class)->extend('custom', function () {
-            return new CustomMailChannel();
-        });
     }
 }

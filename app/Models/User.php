@@ -137,16 +137,4 @@ class User extends Authenticatable implements MustVerifyEmail
         $this->update(['last_login_at' => now()]);
     }
 
-    public function sendEmailVerificationNotification()
-    {
-        $this->notify(new CustomVerifyEmail);
-    }
-
-    /**
-     * Send the password reset notification using PHPMailer
-     */
-    public function sendPasswordResetNotification($token)
-    {
-        $this->notify(new CustomResetPassword($token));
-    }
 }

@@ -20,17 +20,7 @@
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        🎉 Email xác thực đã được gửi thành công! Vui lòng kiểm tra hộp thư của bạn.
-                    </div>
-                @endif
-
-                <!-- Error Messages -->
-                @if (session('error'))
-                    <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        {{ session('error') }}
+                        Link xác thực mới đã được gửi đến email của bạn!
                     </div>
                 @endif
 
@@ -60,13 +50,14 @@
                     <form method="POST" action="{{ route('verification.send') }}" class="mb-6">
                         @csrf
                         <button type="submit"
-                                class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-pink-600 to-orange-500 hover:from-pink-700 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition duration-150 ease-in-out transform hover:scale-105">
+                                class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-pink-600 to-orange-500 hover:from-pink-700 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition duration-150 ease-in-out">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                             </svg>
-                            Gửi lại email xác thực qua PHPMailer
+                            Gửi lại email xác thực
                         </button>
                     </form>
+
                     <!-- Instructions -->
                     <div class="bg-amber-50 border border-amber-200 rounded-md p-4 mb-6">
                         <div class="flex">
@@ -81,7 +72,6 @@
                                     <ul class="list-disc pl-5 space-y-1">
                                         <li>Kiểm tra cả hộp thư spam/junk</li>
                                         <li>Link xác thực có hiệu lực trong 60 phút</li>
-                                        <li>Hiện tại dùng PHPMailer thay vì Laravel Mail</li>
                                         <li>Liên hệ hỗ trợ nếu không nhận được email</li>
                                     </ul>
                                 </div>
