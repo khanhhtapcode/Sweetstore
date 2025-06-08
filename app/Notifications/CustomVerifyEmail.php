@@ -2,9 +2,8 @@
 
 namespace App\Notifications;
 
-use Illuminate\Auth\Notifications\VerifyEmail;
-use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
+use Illuminate\Bus\Queueable;
 use App\Services\EmailService;
 
 class CustomVerifyEmail extends Notification
@@ -16,13 +15,13 @@ class CustomVerifyEmail extends Notification
      */
     public function via($notifiable)
     {
-        return ['custom'];
+        return []; // Không dùng channel, xử lý trực tiếp
     }
 
     /**
-     * Send the notification using PHPMailer
+     * Handle the notification directly
      */
-    public function toCustom($notifiable)
+    public function handle($notifiable)
     {
         $verificationUrl = $this->verificationUrl($notifiable);
 

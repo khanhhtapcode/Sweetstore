@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Notifications\ChannelManager;
+use App\Channels\CustomMailChannel;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,8 +25,10 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }
-        \Illuminate\Notifications\ChannelManager::extend('custom', function () {
-            return new \App\Channels\CustomMailChannel();
+
+        // Sửa cách đăng ký channel - không dùng static
+        $this->app->make(ChannelManager::class)->extend('custom', function () {
+            return new CustomMailChannel();
         });
     }
 }
