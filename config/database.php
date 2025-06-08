@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Str;
-if ($jawsUrl = getenv('mysql://tcwdso9tz1l3eu6g:s3kca8uzrv9g0sl5@u28rhuskh0x5paau.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/vohdzuzp74kvxw0u')) {
-    $url = parse_url($jawsUrl);
+if (isset($_ENV['mysql://tcwdso9tz1l3eu6g:s3kca8uzrv9g0sl5@u28rhuskh0x5paau.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/vohdzuzp74kvxw0u'])) {
+    $url = parse_url($_ENV['JAWSDB_URL']);
     $_ENV['DB_HOST'] = $url['host'];
     $_ENV['DB_PORT'] = $url['port'] ?? 3306;
     $_ENV['DB_DATABASE'] = ltrim($url['path'], '/');
