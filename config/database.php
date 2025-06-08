@@ -45,11 +45,26 @@ return [
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DATABASE_URL'),
-            'host' => config('heroku.host') ?: env('DB_HOST', '127.0.0.1'),
-            'port' => config('heroku.port') ?: env('DB_PORT', '3306'),
-            'database' => config('heroku.database') ?: env('DB_DATABASE', 'forge'),
-            'username' => config('heroku.username') ?: env('DB_USERNAME', 'forge'),
-            'password' => config('heroku.password') ?: env('DB_PASSWORD', ''),
+            'host' => env('DB_HOST') ?: (function() {
+                $url = parse_url(getenv('mysql://tcwdso9tz1l3eu6g:s3kca8uzrv9g0sl5@u28rhuskh0x5paau.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/vohdzuzp74kvxw0u') ?: '');
+                return $url['host'] ?? '127.0.0.1';
+            })(),
+            'port' => env('DB_PORT') ?: (function() {
+                $url = parse_url(getenv('mysql://tcwdso9tz1l3eu6g:s3kca8uzrv9g0sl5@u28rhuskh0x5paau.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/vohdzuzp74kvxw0u') ?: '');
+                return $url['port'] ?? '3306';
+            })(),
+            'database' => env('DB_DATABASE') ?: (function() {
+                $url = parse_url(getenv('mysql://tcwdso9tz1l3eu6g:s3kca8uzrv9g0sl5@u28rhuskh0x5paau.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/vohdzuzp74kvxw0u') ?: '');
+                return ltrim($url['path'] ?? '', '/');
+            })(),
+            'username' => env('DB_USERNAME') ?: (function() {
+                $url = parse_url(getenv('mysql://tcwdso9tz1l3eu6g:s3kca8uzrv9g0sl5@u28rhuskh0x5paau.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/vohdzuzp74kvxw0u') ?: '');
+                return $url['user'] ?? 'forge';
+            })(),
+            'password' => env('DB_PASSWORD') ?: (function() {
+                $url = parse_url(getenv('mysql://tcwdso9tz1l3eu6g:s3kca8uzrv9g0sl5@u28rhuskh0x5paau.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/vohdzuzp74kvxw0u') ?: '');
+                return $url['pass'] ?? '';
+            })(),
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
