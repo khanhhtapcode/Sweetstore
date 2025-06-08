@@ -374,76 +374,18 @@ class OrderController extends Controller
             $oldStatus = $order->status;
             $newStatus = $request->status;
 
-            // Nếu chuyển từ trạng thái đã hủy sang trạng thái khác, cần trừ lại tồn kho
-            if ($oldStatus === 'cancelled' && $newStatus !== 'cancelled') {
-                foreach ($order->orderItems as $item) {
-                    $product = Product::find($item->product_id);
-                    if ($product) {
-                        if ($product->stock_quantity >= $item->quantity) {
-                            $product->decrement('stock_quantity', $item->quantity);
-                        } else {
-                            throw new \Exception("Sản phẩm '{$product->name}' không đủ tồn kho.");
-                        }
-                    }
-                }
+            // Kiểm tra logic chuyển trạng thái hợp lệ
+            if (!$this->isValidStatusTransition($oldStatus, $newStatus)) {
+                throw new \Exception("Không thể chuyển từ trạng thái '{$oldStatus}' sang '{$newStatus}'");
             }
 
-            // Nếu chuyển từ pending sang trạng thái khác (trừ cancelled), cần trừ tồn kho
-            if ($oldStatus === 'pending' && !in_array($newStatus, ['pending', 'cancelled'])) {
-                foreach ($order->orderItems as $item) {
-                    $product = Product::find($item->product_id);
-                    if ($product) {
-                        if ($product->stock_quantity >= $item->quantity) {
-                            $product->decrement('stock_quantity', $item->quantity);
-                        } else {
-                            throw new \Exception("Sản phẩm '{$product->name}' không đủ tồn kho.");
-                        }
-                    }
-                }
-            }
+            // Xử lý tồn kho dựa trên chuyển đổi trạng thái
+            $this->handleStockForStatusChange($order, $oldStatus, $newStatus);
 
-            // Nếu chuyển sang trạng thái hủy, hoàn lại tồn kho
-            if ($oldStatus !== 'cancelled' && $newStatus === 'cancelled' && $oldStatus !== 'pending') {
-                foreach ($order->orderItems as $item) {
-                    $product = Product::find($item->product_id);
-                    if ($product) {
-                        $product->increment('stock_quantity', $item->quantity);
-                    }
-                }
-            }
+            // Xử lý tài xế dựa trên trạng thái mới
+            $this->handleDriverForStatusChange($order, $oldStatus, $newStatus);
 
-            // Tự động gán tài xế khi chuyển sang "ready"
-            if ($newStatus === 'ready' && !$order->driver_id) {
-                $totalWeight = $order->orderItems->sum(function($item) {
-                    return ($item->product->weight ?? 0.5) * $item->quantity;
-                });
-                $totalVolume = $order->orderItems->sum(function($item) {
-                    return ($item->product->volume ?? 0.01) * $item->quantity;
-                });
-
-                $suggestedDriver = $this->findBestDriver($totalWeight, $totalVolume, $order->customer_address);
-                if ($suggestedDriver) {
-                    $order->driver_id = $suggestedDriver->id;
-                    $order->assignDriver($suggestedDriver);
-                }
-            }
-
-            // Cập nhật trạng thái tài xế khi đơn hàng hoàn thành hoặc hủy
-            if ($order->driver_id && in_array($newStatus, ['delivered', 'cancelled'])) {
-                $driver = Driver::find($order->driver_id);
-                if ($driver) {
-                    if ($newStatus === 'delivered') {
-                        $driver->increment('total_deliveries');
-                        $driver->updateRating();
-                    }
-
-                    // Kiểm tra nếu không còn đơn nào đang giao
-                    if ($driver->currentOrders()->where('id', '!=', $order->id)->count() === 0) {
-                        $driver->markAsAvailable();
-                    }
-                }
-            }
-
+            // Cập nhật trạng thái
             $order->update(['status' => $newStatus]);
 
             DB::commit();
@@ -451,15 +393,20 @@ class OrderController extends Controller
             $oldStatusName = Order::getStatuses()[$oldStatus] ?? $oldStatus;
             $newStatusName = Order::getStatuses()[$newStatus] ?? $newStatus;
 
-            return redirect()->back()
-                ->with('success', "Đơn hàng {$order->order_number} đã được chuyển từ '{$oldStatusName}' sang '{$newStatusName}'!");
+            return response()->json([
+                'success' => true,
+                'message' => "Đơn hàng {$order->order_number} đã được chuyển từ '{$oldStatusName}' sang '{$newStatusName}'!"
+            ]);
 
         } catch (\Exception $e) {
             DB::rollback();
-            return redirect()->back()
-                ->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
         }
     }
+
 
     /**
      * Assign driver to order
@@ -472,100 +419,399 @@ class OrderController extends Controller
 
         $driver = Driver::findOrFail($request->driver_id);
 
+        // Kiểm tra điều kiện
         if (!$driver->canTakeNewOrder()) {
-            return redirect()->back()
-                ->with('error', 'Tài xế không thể nhận thêm đơn hàng hoặc đang không hoạt động.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Tài xế không thể nhận thêm đơn hàng.'
+            ], 422);
         }
 
-        if (!$order->can_assign_driver) {
-            return redirect()->back()
-                ->with('error', 'Đơn hàng không thể gán tài xế ở trạng thái hiện tại.');
+        if (!in_array($order->status, ['ready', 'assigned'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đơn hàng không thể gán tài xế ở trạng thái hiện tại.'
+            ], 422);
         }
 
         DB::beginTransaction();
         try {
-            $order->assignDriver($driver);
+            // Hủy gán tài xế cũ nếu có
+            if ($order->driver_id && $order->driver_id != $driver->id) {
+                $oldDriver = Driver::find($order->driver_id);
+                if ($oldDriver && $oldDriver->currentOrders()->where('id', '!=', $order->id)->count() === 0) {
+                    $oldDriver->markAsAvailable();
+                }
+            }
+
+            // Gán tài xế mới
+            $order->update([
+                'driver_id' => $driver->id,
+                'status' => 'assigned',
+                'assigned_at' => now()
+            ]);
+
+            $driver->markAsBusy();
 
             DB::commit();
-            return redirect()->back()
-                ->with('success', "Đã gán tài xế {$driver->name} cho đơn hàng #{$order->order_number}");
+            return response()->json([
+                'success' => true,
+                'message' => "Đã gán tài xế {$driver->name} cho đơn hàng #{$order->order_number}"
+            ]);
+
         } catch (\Exception $e) {
             DB::rollback();
-            return redirect()->back()
-                ->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+            ], 422);
+        }
+    }
+    private function isValidStatusTransition($from, $to)
+    {
+        // Định nghĩa các chuyển đổi hợp lệ
+        $validTransitions = [
+            'pending' => ['confirmed', 'cancelled'],
+            'confirmed' => ['preparing', 'cancelled'],
+            'preparing' => ['ready', 'cancelled'],
+            'ready' => ['assigned', 'cancelled'],
+            'assigned' => ['picked_up', 'cancelled', 'ready'], // Có thể quay lại ready khi hủy gán tài xế
+            'picked_up' => ['delivering', 'cancelled'],
+            'delivering' => ['delivered', 'cancelled'],
+            'delivered' => [], // Không thể chuyển từ delivered
+            'cancelled' => ['pending'] // Có thể khôi phục đơn đã hủy
+        ];
+
+        return in_array($to, $validTransitions[$from] ?? []);
+    }
+    private function handleStockForStatusChange($order, $oldStatus, $newStatus)
+    {
+        // Các trạng thái cần trừ tồn kho
+        $stockReducedStatuses = ['confirmed', 'preparing', 'ready', 'assigned', 'picked_up', 'delivering', 'delivered'];
+        // Các trạng thái không trừ tồn kho
+        $stockNotReducedStatuses = ['pending', 'cancelled'];
+
+        $wasStockReduced = in_array($oldStatus, $stockReducedStatuses);
+        $shouldReduceStock = in_array($newStatus, $stockReducedStatuses);
+
+        if (!$wasStockReduced && $shouldReduceStock) {
+            // Trừ tồn kho khi chuyển từ trạng thái không trừ sang trạng thái cần trừ
+            $this->reduceStock($order);
+        } elseif ($wasStockReduced && !$shouldReduceStock) {
+            // Hoàn lại tồn kho khi chuyển từ trạng thái đã trừ sang trạng thái không trừ
+            $this->restoreStock($order);
+        }
+    }
+    private function handleDriverForStatusChange($order, $oldStatus, $newStatus)
+    {
+        // Tự động gán tài xế khi chuyển sang "ready" và chưa có tài xế
+        if ($newStatus === 'ready' && !$order->driver_id) {
+            $suggestedDriver = $this->findBestDriverForOrder($order);
+            if ($suggestedDriver) {
+                $order->driver_id = $suggestedDriver->id;
+                $order->assigned_at = now();
+                $newStatus = 'assigned'; // Tự động chuyển sang assigned
+                $suggestedDriver->markAsBusy();
+            }
+        }
+
+        // Xử lý khi chuyển sang assigned
+        if ($newStatus === 'assigned' && $order->driver_id) {
+            $driver = Driver::find($order->driver_id);
+            if ($driver && $driver->canTakeNewOrder()) {
+                $driver->markAsBusy();
+                $order->assigned_at = now();
+            }
+        }
+
+        // Xử lý khi hoàn thành hoặc hủy
+        if (in_array($newStatus, ['delivered', 'cancelled']) && $order->driver_id) {
+            $driver = Driver::find($order->driver_id);
+            if ($driver) {
+                if ($newStatus === 'delivered') {
+                    $driver->increment('total_deliveries');
+                    $driver->updateRating();
+                    $order->delivered_at = now();
+                }
+
+                // Kiểm tra nếu không còn đơn nào đang giao
+                $remainingOrders = $driver->currentOrders()
+                    ->where('id', '!=', $order->id)
+                    ->count();
+
+                if ($remainingOrders === 0) {
+                    $driver->markAsAvailable();
+                }
+            }
+        }
+
+        // Xử lý khi quay lại ready từ assigned (hủy gán tài xế)
+        if ($oldStatus === 'assigned' && $newStatus === 'ready') {
+            if ($order->driver_id) {
+                $driver = Driver::find($order->driver_id);
+                $order->driver_id = null;
+                $order->assigned_at = null;
+
+                if ($driver && $driver->currentOrders()->where('id', '!=', $order->id)->count() === 0) {
+                    $driver->markAsAvailable();
+                }
+            }
         }
     }
 
+    /**
+     * Update delivery status - FIXED VERSION với logging
+     */
+    public function updateDeliveryStatus(Request $request, Order $order)
+    {
+        // Debug logging
+        \Log::info('updateDeliveryStatus called', [
+            'order_id' => $order->id,
+            'current_status' => $order->status,
+            'requested_status' => $request->status,
+            'driver_id' => $order->driver_id
+        ]);
+
+        $request->validate([
+            'status' => 'required|in:picked_up,delivering,delivered',
+            'notes' => 'nullable|string|max:500'
+        ]);
+
+        // FIXED: Mở rộng danh sách trạng thái được phép
+        $allowedCurrentStatuses = ['ready', 'assigned', 'picked_up', 'delivering'];
+
+        if (!in_array($order->status, $allowedCurrentStatuses)) {
+            \Log::warning('Invalid current status for delivery update', [
+                'order_id' => $order->id,
+                'current_status' => $order->status,
+                'allowed_statuses' => $allowedCurrentStatuses
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => "Không thể cập nhật trạng thái giao hàng từ '{$order->status}'. Trạng thái hiện tại: {$order->status_name}"
+            ], 422);
+        }
+
+        // FIXED: Kiểm tra logic chuyển đổi hợp lệ
+        $requestedStatus = $request->status;
+        $validTransitions = [
+            'ready' => ['picked_up'],
+            'assigned' => ['picked_up'],
+            'picked_up' => ['delivering', 'delivered'],
+            'delivering' => ['delivered']
+        ];
+
+        if (!in_array($requestedStatus, $validTransitions[$order->status] ?? [])) {
+            return response()->json([
+                'success' => false,
+                'message' => "Không thể chuyển từ '{$order->status_name}' sang '{$requestedStatus}'"
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $notes = $request->notes;
+
+            switch ($requestedStatus) {
+                case 'picked_up':
+                    $order->update([
+                        'status' => 'picked_up',
+                        'picked_up_at' => now(),
+                        'delivery_notes' => $notes
+                    ]);
+                    $message = 'Đã cập nhật: Đã lấy hàng';
+                    break;
+
+                case 'delivering':
+                    $order->update([
+                        'status' => 'delivering',
+                        'delivery_notes' => $notes
+                    ]);
+                    $message = 'Đã cập nhật: Đang giao hàng';
+                    break;
+
+                case 'delivered':
+                    $order->update([
+                        'status' => 'delivered',
+                        'delivered_at' => now(),
+                        'delivery_notes' => $notes
+                    ]);
+
+                    // Cập nhật thống kê tài xế
+                    if ($order->driver) {
+                        $order->driver->increment('total_deliveries');
+                        $order->driver->updateRating();
+
+                        // Kiểm tra xem còn đơn nào đang giao không
+                        if ($order->driver->currentOrders()->where('id', '!=', $order->id)->count() === 0) {
+                            $order->driver->markAsAvailable();
+                        }
+                    }
+                    $message = 'Đã cập nhật: Giao hàng thành công';
+                    break;
+
+                default:
+                    throw new \Exception('Trạng thái không hợp lệ');
+            }
+
+            \Log::info('Delivery status updated successfully', [
+                'order_id' => $order->id,
+                'old_status' => $order->getOriginal('status'),
+                'new_status' => $order->status
+            ]);
+
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'message' => $message
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            \Log::error('Error updating delivery status', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+            ], 422);
+        }
+    }
+    /**
+     * Trừ tồn kho
+     */
+    private function reduceStock($order)
+    {
+        foreach ($order->orderItems as $item) {
+            $product = Product::find($item->product_id);
+            if ($product) {
+                if ($product->stock_quantity >= $item->quantity) {
+                    $product->decrement('stock_quantity', $item->quantity);
+                } else {
+                    throw new \Exception("Sản phẩm '{$product->name}' không đủ tồn kho. Còn lại: {$product->stock_quantity}, cần: {$item->quantity}");
+                }
+            }
+        }
+    }
+
+    /**
+     * Hoàn lại tồn kho
+     */
+    private function restoreStock($order)
+    {
+        foreach ($order->orderItems as $item) {
+            $product = Product::find($item->product_id);
+            if ($product) {
+                $product->increment('stock_quantity', $item->quantity);
+            }
+        }
+    }
     /**
      * Unassign driver from order
      */
     public function unassignDriver(Order $order)
     {
         if (!$order->driver_id) {
-            return redirect()->back()
-                ->with('error', 'Đơn hàng chưa được gán tài xế.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Đơn hàng chưa được gán tài xế.'
+            ], 422);
+        }
+
+        if (!in_array($order->status, ['assigned', 'picked_up'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể hủy gán tài xế ở trạng thái hiện tại.'
+            ], 422);
         }
 
         DB::beginTransaction();
         try {
             $driverName = $order->driver->name;
-            $order->unassignDriver();
+            $driver = $order->driver;
 
-            DB::commit();
-            return redirect()->back()
-                ->with('success', "Đã hủy gán tài xế {$driverName} cho đơn hàng #{$order->order_number}");
-        } catch (\Exception $e) {
-            DB::rollback();
-            return redirect()->back()
-                ->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
-        }
-    }
+            $order->update([
+                'driver_id' => null,
+                'status' => 'ready',
+                'assigned_at' => null,
+                'picked_up_at' => null,
+                'delivery_notes' => null
+            ]);
 
-    /**
-     * Update delivery status
-     */
-    public function updateDeliveryStatus(Request $request, Order $order)
-    {
-        $request->validate([
-            'status' => 'required|in:picked_up,delivering,delivered',
-            'notes' => 'nullable|string|max:500'
-        ]);
-
-        if (!$order->can_update_delivery_status) {
-            return redirect()->back()
-                ->with('error', 'Không thể cập nhật trạng thái giao hàng cho đơn hàng này.');
-        }
-
-        DB::beginTransaction();
-        try {
-            switch ($request->status) {
-                case 'picked_up':
-                    $order->markAsPickedUp($request->notes);
-                    $message = 'Đã cập nhật trạng thái: Đã lấy hàng';
-                    break;
-                case 'delivering':
-                    $order->markAsDelivering($request->notes);
-                    $message = 'Đã cập nhật trạng thái: Đang giao hàng';
-                    break;
-                case 'delivered':
-                    $order->markAsDelivered($request->notes);
-                    $message = 'Đã cập nhật trạng thái: Đã giao hàng thành công';
-                    break;
+            // Cập nhật trạng thái tài xế nếu không còn đơn nào
+            if ($driver && $driver->currentOrders()->count() === 0) {
+                $driver->markAsAvailable();
             }
 
             DB::commit();
-            return redirect()->back()
-                ->with('success', $message);
+            return response()->json([
+                'success' => true,
+                'message' => "Đã hủy gán tài xế {$driverName} cho đơn hàng #{$order->order_number}"
+            ]);
+
         } catch (\Exception $e) {
             DB::rollback();
-            return redirect()->back()
-                ->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+            ], 422);
         }
     }
+    public function autoAssignDrivers()
+    {
+        DB::beginTransaction();
+        try {
+            $readyOrders = Order::where('status', 'ready')
+                ->whereNull('driver_id')
+                ->with('orderItems.product')
+                ->get();
 
-    /**
-     * Find the best available driver for an order
-     */
+            $assignedCount = 0;
+
+            foreach ($readyOrders as $order) {
+                $driver = $this->findBestDriverForOrder($order);
+                if ($driver) {
+                    $order->update([
+                        'driver_id' => $driver->id,
+                        'status' => 'assigned',
+                        'assigned_at' => now()
+                    ]);
+                    $driver->markAsBusy();
+                    $assignedCount++;
+                }
+            }
+
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'message' => "Đã tự động gán tài xế cho {$assignedCount} đơn hàng"
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+            ], 422);
+        }
+    }
+    private function findBestDriverForOrder($order)
+    {
+        $totalWeight = $order->orderItems->sum(function($item) {
+            return ($item->product->weight ?? 0.5) * $item->quantity;
+        });
+
+        $totalVolume = $order->orderItems->sum(function($item) {
+            return ($item->product->volume ?? 0.01) * $item->quantity;
+        });
+
+        return $this->findBestDriver($totalWeight, $totalVolume, $order->customer_address);
+    }
     /**
      * Find the best available driver for an order - FIXED VERSION
      */

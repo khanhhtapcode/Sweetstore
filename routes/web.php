@@ -86,6 +86,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Order - Bulk Actions
     Route::post('orders/bulk-action', [OrderController::class, 'bulkAction'])->name('orders.bulk-action');
+    Route::post('orders/auto-assign-drivers', [OrderController::class, 'autoAssignDrivers'])->name('orders.auto-assign-drivers'); // ADDED THIS
     Route::get('orders/export', [OrderController::class, 'export'])->name('orders.export');
     Route::get('orders/{order}/invoice', [OrderController::class, 'printInvoice'])->name('orders.invoice');
 
