@@ -44,6 +44,7 @@ return [
 
         'mysql' => [
             'driver' => 'mysql',
+            'url' => env('DATABASE_URL'),
             'host' => config('heroku.host') ?: env('DB_HOST', '127.0.0.1'),
             'port' => config('heroku.port') ?: env('DB_PORT', '3306'),
             'database' => config('heroku.database') ?: env('DB_DATABASE', 'forge'),
