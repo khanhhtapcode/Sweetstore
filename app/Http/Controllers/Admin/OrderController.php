@@ -566,22 +566,28 @@ class OrderController extends Controller
     /**
      * Find the best available driver for an order
      */
+    /**
+     * Find the best available driver for an order - FIXED VERSION
+     */
     private function findBestDriver($totalWeight, $totalVolume, $deliveryAddress)
     {
         // Xác định loại xe cần thiết dựa trên trọng lượng và thể tích
         $requiredVehicleType = $this->determineRequiredVehicleType($totalWeight, $totalVolume);
 
-        // Tìm tài xế phù hợp
-        $availableDrivers = Driver::available()
+        // FIXED: Tìm tài xế phù hợp với logic đúng
+        $availableDrivers = Driver::where('status', Driver::STATUS_ACTIVE)
             ->where('vehicle_type', $requiredVehicleType)
-            ->whereHas('currentOrders', function($query) {
-                $query->havingRaw('COUNT(*) < 3');
-            }, '<', 3)
-            ->orWhere(function($query) use ($requiredVehicleType) {
-                $query->where('vehicle_type', $requiredVehicleType)
-                    ->whereDoesntHave('currentOrders');
+            ->where(function($query) {
+                // Tài xế không có đơn nào HOẶC có ít hơn 3 đơn
+                $query->whereDoesntHave('currentOrders')
+                    ->orWhereHas('currentOrders', function($subQuery) {
+                        // Đếm số đơn hiện tại
+                        $subQuery->selectRaw('COUNT(*)')
+                            ->whereIn('status', ['assigned', 'picked_up', 'delivering'])
+                            ->havingRaw('COUNT(*) < 3');
+                    });
             })
-            ->with('currentOrders')
+            ->withCount('currentOrders')
             ->get();
 
         if ($availableDrivers->isEmpty()) {
@@ -589,24 +595,36 @@ class OrderController extends Controller
             $fallbackVehicles = ['motorbike', 'small_truck', 'van'];
             $currentIndex = array_search($requiredVehicleType, $fallbackVehicles);
 
-            for ($i = $currentIndex + 1; $i < count($fallbackVehicles); $i++) {
-                $availableDrivers = Driver::available()
-                    ->where('vehicle_type', $fallbackVehicles[$i])
-                    ->whereHas('currentOrders', function($query) {
-                        $query->havingRaw('COUNT(*) < 3');
-                    }, '<', 3)
-                    ->orWhere(function($query) use ($fallbackVehicles, $i) {
-                        $query->where('vehicle_type', $fallbackVehicles[$i])
-                            ->whereDoesntHave('currentOrders');
-                    })
-                    ->with('currentOrders')
-                    ->get();
+            if ($currentIndex !== false) {
+                for ($i = $currentIndex + 1; $i < count($fallbackVehicles); $i++) {
+                    $availableDrivers = Driver::where('status', Driver::STATUS_ACTIVE)
+                        ->where('vehicle_type', $fallbackVehicles[$i])
+                        ->where(function($query) {
+                            $query->whereDoesntHave('currentOrders')
+                                ->orWhereHas('currentOrders', function($subQuery) {
+                                    $subQuery->selectRaw('COUNT(*)')
+                                        ->whereIn('status', ['assigned', 'picked_up', 'delivering'])
+                                        ->havingRaw('COUNT(*) < 3');
+                                });
+                        })
+                        ->withCount('currentOrders')
+                        ->get();
 
-                if ($availableDrivers->isNotEmpty()) {
-                    break;
+                    if ($availableDrivers->isNotEmpty()) {
+                        break;
+                    }
                 }
             }
         }
+
+        if ($availableDrivers->isEmpty()) {
+            return null;
+        }
+
+        // Lọc lại bằng method canTakeNewOrder() để double-check
+        $availableDrivers = $availableDrivers->filter(function($driver) {
+            return $driver->canTakeNewOrder();
+        });
 
         if ($availableDrivers->isEmpty()) {
             return null;

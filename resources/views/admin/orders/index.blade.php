@@ -2,7 +2,7 @@
     <x-slot name="header">
         Quản Lý Đơn Hàng 📋
     </x-slot>
-
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- Thống kê nhanh -->
     <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
         <div class="bg-yellow-50 rounded-lg p-6 border border-yellow-200">
@@ -256,54 +256,68 @@
                                 {{ $payment['text'] }}
                             </span>
                         </td>
+                        <!-- LOGIC ĐƠN GIẢN VÀ HỢP LÝ HƠN -->
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex space-x-2">
+                                <!-- Nút xem chi tiết (luôn có) -->
                                 <a href="{{ route('admin.orders.show', $order) }}"
                                    class="text-blue-600 hover:text-blue-900" title="Xem chi tiết">👁️</a>
 
                                 @if($order->status !== 'delivered' && $order->status !== 'cancelled')
-                                    <!-- Quick Status Update -->
-                                    <div class="relative inline-block text-left">
-                                        <button type="button" onclick="toggleDropdown({{ $order->id }})"
-                                                class="text-green-600 hover:text-green-900" title="Cập nhật trạng thái">⚡</button>
-                                        <div id="dropdown-{{ $order->id }}" class="hidden absolute right-0 z-10 mt-2 w-56 bg-white border border-gray-200 rounded-md shadow-lg">
-                                            <div class="py-1">
-                                                @if($order->status === 'pending')
-                                                    <a href="#" onclick="updateStatus({{ $order->id }}, 'confirmed')"
-                                                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">✅ Xác nhận</a>
-                                                @endif
-                                                @if(in_array($order->status, ['confirmed', 'preparing']))
-                                                    <a href="#" onclick="updateStatus({{ $order->id }}, 'preparing')"
-                                                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">👨‍🍳 Đang chuẩn bị</a>
-                                                @endif
-                                                @if(in_array($order->status, ['confirmed', 'preparing', 'ready']))
-                                                    <a href="#" onclick="updateStatus({{ $order->id }}, 'ready')"
-                                                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">📦 Sẵn sàng giao</a>
-                                                @endif
-                                                @if(in_array($order->status, ['assigned', 'picked_up']))
-                                                    <a href="#" onclick="updateDeliveryStatus({{ $order->id }}, 'picked_up')"
-                                                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">📋 Đã lấy hàng</a>
-                                                    <a href="#" onclick="updateDeliveryStatus({{ $order->id }}, 'delivering')"
-                                                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">🚛 Đang giao</a>
-                                                @endif
-                                                @if(in_array($order->status, ['delivering', 'picked_up']))
-                                                    <a href="#" onclick="updateDeliveryStatus({{ $order->id }}, 'delivered')"
-                                                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">✅ Đã giao</a>
-                                                @endif
-                                                <hr class="my-1">
-                                                <a href="#" onclick="updateStatus({{ $order->id }}, 'cancelled')"
-                                                   class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">❌ Hủy đơn</a>
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                    <!-- Driver Assignment -->
-                                    @if($order->status == 'ready' && !$order->driver_id)
-                                        <button onclick="showDriverModal({{ $order->id }})"
-                                                class="text-purple-600 hover:text-purple-900" title="Gán tài xế">🚚</button>
-                                    @elseif($order->driver_id && in_array($order->status, ['ready', 'assigned']))
-                                        <button onclick="unassignDriver({{ $order->id }})"
-                                                class="text-orange-600 hover:text-orange-900" title="Hủy gán tài xế">🔄</button>
+                                    <!-- Quick Status Update - CHỈ HIỂN THỊ NÚT TIẾP THEO HỢP LÝ -->
+                                    @if($order->status === 'pending')
+                                        <button onclick="updateStatus({{ $order->id }}, 'confirmed')"
+                                                class="text-green-600 hover:text-green-900" title="Xác nhận đơn hàng">✅</button>
+
+                                    @elseif($order->status === 'confirmed')
+                                        <button onclick="updateStatus({{ $order->id }}, 'preparing')"
+                                                class="text-purple-600 hover:text-purple-900" title="Bắt đầu chuẩn bị">👨‍🍳</button>
+
+                                    @elseif($order->status === 'preparing')
+                                        <button onclick="updateStatus({{ $order->id }}, 'ready')"
+                                                class="text-blue-600 hover:text-blue-900" title="Sẵn sàng giao hàng">📦</button>
+
+                                    @elseif($order->status === 'ready')
+                                        <!-- Nếu chưa có tài xế: Nút gán tài xế -->
+                                        @if(!$order->driver_id)
+                                            <button onclick="showDriverModal({{ $order->id }})"
+                                                    class="text-purple-600 hover:text-purple-900" title="Gán tài xế">🚚</button>
+                                        @else
+                                            <!-- Nếu đã có tài xế: Nút hoàn thành và hủy gán -->
+                                            <button onclick="updateDeliveryStatus({{ $order->id }}, 'delivered')"
+                                                    class="text-green-600 hover:text-green-900" title="Đánh dấu đã giao">✅</button>
+                                            <button onclick="unassignDriver({{ $order->id }})"
+                                                    class="text-orange-600 hover:text-orange-900" title="Hủy gán tài xế">🔄</button>
+                                        @endif
+
+                                    @elseif($order->status === 'assigned')
+                                        <button onclick="updateDeliveryStatus({{ $order->id }}, 'picked_up')"
+                                                class="text-orange-600 hover:text-orange-900" title="Đã lấy hàng">📋</button>
+                                        <button onclick="updateDeliveryStatus({{ $order->id }}, 'delivered')"
+                                                class="text-green-600 hover:text-green-900" title="Đã giao xong">✅</button>
+
+                                    @elseif($order->status === 'picked_up')
+                                        <button onclick="updateDeliveryStatus({{ $order->id }}, 'delivering')"
+                                                class="text-blue-600 hover:text-blue-900" title="Đang giao hàng">🚛</button>
+                                        <button onclick="updateDeliveryStatus({{ $order->id }}, 'delivered')"
+                                                class="text-green-600 hover:text-green-900" title="Đã giao xong">✅</button>
+
+                                    @elseif($order->status === 'delivering')
+                                        <button onclick="updateDeliveryStatus({{ $order->id }}, 'delivered')"
+                                                class="text-green-600 hover:text-green-900" title="Đã giao xong">✅</button>
+                                    @endif
+
+                                    <!-- Nút hủy đơn (luôn có cho đơn chưa hoàn thành) -->
+                                    <button onclick="updateStatus({{ $order->id }}, 'cancelled')"
+                                            class="text-red-600 hover:text-red-900" title="Hủy đơn hàng"
+                                            onclick="return confirm('⚠️ Bạn chắc chắn muốn hủy đơn hàng này?')">❌</button>
+                                @else
+                                    <!-- Đơn đã hoàn thành hoặc đã hủy -->
+                                    @if($order->status === 'delivered')
+                                        <span class="text-green-600" title="Đã hoàn thành">✅ Hoàn thành</span>
+                                    @else
+                                        <span class="text-red-600" title="Đã hủy">❌ Đã hủy</span>
                                     @endif
                                 @endif
                             </div>
@@ -371,6 +385,7 @@
         </div>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         let currentOrderId = null;
         let availableDrivers = [];
@@ -389,16 +404,213 @@
                 .catch(error => console.error('Error fetching drivers:', error));
         }
 
+        // AJAX Setup
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        // AJAX Status Update Functions
+        function updateStatus(orderId, status) {
+            const statusTexts = {
+                'confirmed': 'xác nhận',
+                'preparing': 'chuyển sang đang chuẩn bị',
+                'ready': 'chuyển sang sẵn sàng giao',
+                'delivered': 'đánh dấu đã giao',
+                'cancelled': 'hủy'
+            };
+
+            if (confirm(`Bạn có chắc chắn muốn ${statusTexts[status]} đơn hàng này?`)) {
+                $.ajax({
+                    url: `/admin/orders/${orderId}/status`,
+                    type: 'PATCH',
+                    data: {
+                        status: status
+                    },
+                    success: function(response) {
+                        updateOrderRowStatus(orderId, status);
+                        showSuccessAlert('Cập nhật trạng thái thành công!');
+                        updateStatistics(); // Cập nhật số liệu thống kê
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'Có lỗi xảy ra!';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        showErrorAlert(errorMessage);
+                    }
+                });
+            }
+        }
+
+        function updateDeliveryStatus(orderId, status) {
+            const statusTexts = {
+                'picked_up': 'đánh dấu đã lấy hàng',
+                'delivering': 'đánh dấu đang giao hàng',
+                'delivered': 'đánh dấu đã giao hàng'
+            };
+
+            const notes = prompt(`Ghi chú cho việc ${statusTexts[status]}:`);
+
+            $.ajax({
+                url: `/admin/orders/${orderId}/delivery-status`,
+                type: 'PATCH',
+                data: {
+                    status: status,
+                    notes: notes
+                },
+                success: function(response) {
+                    updateOrderRowStatus(orderId, status);
+                    showSuccessAlert('Cập nhật trạng thái giao hàng thành công!');
+                    updateStatistics();
+                },
+                error: function(xhr) {
+                    let errorMessage = 'Có lỗi xảy ra!';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+                    showErrorAlert(errorMessage);
+                }
+            });
+        }
+
+        function unassignDriver(orderId) {
+            if (confirm('Bạn có chắc chắn muốn hủy gán tài xế cho đơn hàng này?')) {
+                $.ajax({
+                    url: `/admin/orders/${orderId}/unassign-driver`,
+                    type: 'DELETE',
+                    success: function(response) {
+                        updateOrderRowDriver(orderId, null);
+                        showSuccessAlert('Đã hủy gán tài xế thành công!');
+                        updateStatistics();
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'Có lỗi xảy ra!';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        showErrorAlert(errorMessage);
+                    }
+                });
+            }
+        }
+
+        // UI Update Functions
+        function updateOrderRowStatus(orderId, newStatus) {
+            // Tìm row của order bằng cách tìm button có onclick chứa orderId
+            const orderRow = $(`button[onclick*="updateStatus(${orderId}"]`).closest('tr');
+
+            const statusCell = orderRow.find('td:nth-child(6)');
+            const statusConfig = {
+                'pending': { class: 'bg-yellow-100 text-yellow-800', text: 'Chờ xác nhận' },
+                'confirmed': { class: 'bg-blue-100 text-blue-800', text: 'Đã xác nhận' },
+                'preparing': { class: 'bg-purple-100 text-purple-800', text: 'Đang chuẩn bị' },
+                'ready': { class: 'bg-indigo-100 text-indigo-800', text: 'Sẵn sàng giao' },
+                'assigned': { class: 'bg-cyan-100 text-cyan-800', text: 'Đã gán tài xế' },
+                'picked_up': { class: 'bg-orange-100 text-orange-800', text: 'Đã lấy hàng' },
+                'delivering': { class: 'bg-pink-100 text-pink-800', text: 'Đang giao' },
+                'delivered': { class: 'bg-green-100 text-green-800', text: 'Đã giao' },
+                'cancelled': { class: 'bg-red-100 text-red-800', text: 'Đã hủy' }
+            };
+
+            const config = statusConfig[newStatus] || statusConfig['pending'];
+            statusCell.html(`
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.class}">
+                    ${config.text}
+                </span>
+            `);
+
+            // Cập nhật hành động nếu status = 'ready' và chưa có tài xế
+            if (newStatus === 'ready') {
+                const driverCell = orderRow.find('td:nth-child(3)');
+                if (driverCell.text().includes('Chưa gán') || driverCell.text().includes('Cần gán tài xế')) {
+                    const actionCell = orderRow.find('td:last-child .flex');
+                    // Thêm nút gán tài xế nếu chưa có
+                    if (!actionCell.find('button[onclick*="showDriverModal"]').length) {
+                        actionCell.append(`
+                            <button onclick="showDriverModal(${orderId})"
+                                    class="text-purple-600 hover:text-purple-900" title="Gán tài xế">🚚</button>
+                        `);
+                    }
+                }
+            }
+        }
+
+        function updateOrderRowDriver(orderId, driver) {
+            const orderRow = $(`button[onclick*="updateStatus(${orderId}"]`).closest('tr');
+            const driverCell = orderRow.find('td:nth-child(3)');
+
+            if (driver) {
+                driverCell.html(`
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-8 w-8">
+                            <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                <span class="text-xs font-medium text-blue-600">${driver.name.charAt(0)}</span>
+                            </div>
+                        </div>
+                        <div class="ml-3">
+                            <div class="text-sm font-medium text-gray-900">${driver.name}</div>
+                            <div class="text-sm text-gray-500">${driver.vehicle_number}</div>
+                        </div>
+                    </div>
+                `);
+            } else {
+                driverCell.html(`
+                    <div class="flex items-center">
+                        <span class="text-red-600 font-medium text-sm">🚨 Cần gán tài xế</span>
+                    </div>
+                `);
+            }
+        }
+
+        function updateStatistics() {
+            // Reload các số liệu thống kê ở đầu trang
+            location.reload(); // Tạm thời dùng reload, có thể tối ưu bằng AJAX riêng
+        }
+
+        // Alert Functions
+        function showSuccessAlert(message) {
+            const alert = $(`
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4" role="alert">
+                    <span class="block sm:inline">✅ ${message}</span>
+                </div>
+            `);
+
+            $('.grid.grid-cols-1.md\\:grid-cols-5.gap-6.mb-8').after(alert);
+
+            setTimeout(() => {
+                alert.fadeOut(500, function() {
+                    $(this).remove();
+                });
+            }, 5000);
+        }
+
+        function showErrorAlert(message) {
+            const alert = $(`
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+                    <span class="block sm:inline">❌ ${message}</span>
+                </div>
+            `);
+
+            $('.grid.grid-cols-1.md\\:grid-cols-5.gap-6.mb-8').after(alert);
+
+            setTimeout(() => {
+                alert.fadeOut(500, function() {
+                    $(this).remove();
+                });
+            }, 5000);
+        }
+
+        // Giữ nguyên các function khác từ code cũ
         function showDriverModal(orderId) {
             currentOrderId = orderId;
             const modal = document.getElementById('driverModal');
             const form = document.getElementById('assignDriverForm');
             const select = document.getElementById('driverSelect');
 
-            // Update form action
             form.action = `/admin/orders/${orderId}/assign-driver`;
 
-            // Clear and populate driver select
             select.innerHTML = '<option value="">-- Chọn tài xế --</option>';
 
             availableDrivers.forEach(driver => {
@@ -415,6 +627,16 @@
         function closeDriverModal() {
             document.getElementById('driverModal').classList.add('hidden');
             currentOrderId = null;
+        }
+
+        function toggleDropdown(orderId) {
+            const dropdown = document.getElementById(`dropdown-${orderId}`);
+            document.querySelectorAll('[id^="dropdown-"]').forEach(el => {
+                if (el.id !== `dropdown-${orderId}`) {
+                    el.classList.add('hidden');
+                }
+            });
+            dropdown.classList.toggle('hidden');
         }
 
         // Show driver info when selected
@@ -454,146 +676,21 @@
             return statuses[status] || status;
         }
 
-        function toggleDropdown(orderId) {
-            const dropdown = document.getElementById(`dropdown-${orderId}`);
-            // Hide all other dropdowns
-            document.querySelectorAll('[id^="dropdown-"]').forEach(el => {
-                if (el.id !== `dropdown-${orderId}`) {
-                    el.classList.add('hidden');
-                }
-            });
-            dropdown.classList.toggle('hidden');
-        }
-
-        function updateStatus(orderId, status) {
-            const statusTexts = {
-                'confirmed': 'xác nhận',
-                'preparing': 'chuyển sang đang chuẩn bị',
-                'ready': 'chuyển sang sẵn sàng giao',
-                'delivered': 'đánh dấu đã giao',
-                'cancelled': 'hủy'
-            };
-
-            if (confirm(`Bạn có chắc chắn muốn ${statusTexts[status]} đơn hàng này?`)) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `/admin/orders/${orderId}/status`;
-
-                const csrfToken = document.createElement('input');
-                csrfToken.type = 'hidden';
-                csrfToken.name = '_token';
-                csrfToken.value = '{{ csrf_token() }}';
-                form.appendChild(csrfToken);
-
-                const methodField = document.createElement('input');
-                methodField.type = 'hidden';
-                methodField.name = '_method';
-                methodField.value = 'PATCH';
-                form.appendChild(methodField);
-
-                const statusField = document.createElement('input');
-                statusField.type = 'hidden';
-                statusField.name = 'status';
-                statusField.value = status;
-                form.appendChild(statusField);
-
-                document.body.appendChild(form);
-                form.submit();
-            }
-        }
-
-        function updateDeliveryStatus(orderId, status) {
-            const statusTexts = {
-                'picked_up': 'đánh dấu đã lấy hàng',
-                'delivering': 'đánh dấu đang giao hàng',
-                'delivered': 'đánh dấu đã giao hàng'
-            };
-
-            const notes = prompt(`Ghi chú cho việc ${statusTexts[status]}:`);
-
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = `/admin/orders/${orderId}/delivery-status`;
-
-            const csrfToken = document.createElement('input');
-            csrfToken.type = 'hidden';
-            csrfToken.name = '_token';
-            csrfToken.value = '{{ csrf_token() }}';
-            form.appendChild(csrfToken);
-
-            const methodField = document.createElement('input');
-            methodField.type = 'hidden';
-            methodField.name = '_method';
-            methodField.value = 'PATCH';
-            form.appendChild(methodField);
-
-            const statusField = document.createElement('input');
-            statusField.type = 'hidden';
-            statusField.name = 'status';
-            statusField.value = status;
-            form.appendChild(statusField);
-
-            if (notes) {
-                const notesField = document.createElement('input');
-                notesField.type = 'hidden';
-                notesField.name = 'notes';
-                notesField.value = notes;
-                form.appendChild(notesField);
-            }
-
-            document.body.appendChild(form);
-            form.submit();
-        }
-
-        function unassignDriver(orderId) {
-            if (confirm('Bạn có chắc chắn muốn hủy gán tài xế cho đơn hàng này?')) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `/admin/orders/${orderId}/unassign-driver`;
-
-                const csrfToken = document.createElement('input');
-                csrfToken.type = 'hidden';
-                csrfToken.name = '_token';
-                csrfToken.value = '{{ csrf_token() }}';
-                form.appendChild(csrfToken);
-
-                const methodField = document.createElement('input');
-                methodField.type = 'hidden';
-                methodField.name = '_method';
-                methodField.value = 'POST';
-                form.appendChild(methodField);
-
-                document.body.appendChild(form);
-                form.submit();
-            }
-        }
-
         function autoAssignDrivers() {
             if (confirm('Bạn có muốn tự động gán tài xế cho tất cả đơn hàng sẵn sàng giao?')) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '/admin/orders/auto-assign-drivers';
-
-                const csrfToken = document.createElement('input');
-                csrfToken.type = 'hidden';
-                csrfToken.name = '_token';
-                csrfToken.value = '{{ csrf_token() }}';
-                form.appendChild(csrfToken);
-
-                document.body.appendChild(form);
-                form.submit();
+                $.ajax({
+                    url: '/admin/orders/auto-assign-drivers',
+                    type: 'POST',
+                    success: function(response) {
+                        showSuccessAlert('Đã tự động gán tài xế thành công!');
+                        location.reload(); // Reload để hiển thị kết quả
+                    },
+                    error: function(xhr) {
+                        showErrorAlert('Có lỗi xảy ra khi tự động gán tài xế!');
+                    }
+                });
             }
         }
-
-        // Auto dismiss alerts
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('.bg-green-100, .bg-red-100');
-            alerts.forEach(alert => {
-                alert.style.transition = 'opacity 0.5s';
-                alert.style.opacity = '0';
-                setTimeout(() => alert.remove(), 500);
-            });
-        }, 5000);
 
         // Close dropdowns when clicking outside
         document.addEventListener('click', function(event) {
@@ -606,5 +703,109 @@
 
         // Refresh drivers list every 30 seconds
         setInterval(fetchAvailableDrivers, 30000);
+        // Simplified JavaScript - Bỏ dropdown phức tạp
+        function updateStatus(orderId, status) {
+            console.log('Calling route:', `/admin/orders/${orderId}/status`);
+
+            const confirmMessages = {
+                'confirmed': 'Bạn có chắc muốn xác nhận đơn hàng này?',
+                'preparing': 'Bắt đầu chuẩn bị đơn hàng?',
+                'ready': 'Đánh dấu đơn hàng sẵn sàng giao?',
+                'cancelled': '⚠️ Bạn chắc chắn muốn HỦY đơn hàng này?'
+            };
+
+            if (confirm(confirmMessages[status] || 'Xác nhận thay đổi?')) {
+
+                // CÁCH 1: Sử dụng AJAX với đầy đủ headers
+                $.ajax({
+                    url: `/admin/orders/${orderId}/status`,
+                    type: 'POST', // Chú ý: Dùng POST thay vì PATCH
+                    data: {
+                        _method: 'PATCH', // Laravel method spoofing
+                        status: status,
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        console.log('Success:', response);
+                        location.reload();
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Error details:', xhr.responseText);
+                        console.log('Status:', status);
+                        console.log('Error:', error);
+                        alert('❌ Lỗi: ' + (xhr.responseJSON?.message || xhr.responseText || 'Unknown error'));
+                    }
+                });
+
+            if (confirm(confirmMessages[status] || 'Xác nhận thay đổi?')) {
+                $.ajax({
+                    url: `/admin/orders/${orderId}/status`,
+                    type: 'PATCH',
+                    data: {
+                        status: status,
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        // Reload page để cập nhật
+                        location.reload();
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'Có lỗi xảy ra!';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        alert('❌ ' + errorMessage);
+                    }
+                });
+            }
+        }
+
+        function updateDeliveryStatus(orderId, status) {
+            const confirmMessages = {
+                'picked_up': 'Xác nhận đã lấy hàng?',
+                'delivering': 'Đánh dấu đang giao hàng?',
+                'delivered': '✅ Xác nhận đã giao hàng thành công?'
+            };
+
+            if (confirm(confirmMessages[status] || 'Xác nhận?')) {
+                const notes = status === 'delivered' ? prompt('Ghi chú (tùy chọn):') : null;
+
+                $.ajax({
+                    url: `/admin/orders/${orderId}/delivery-status`,
+                    type: 'PATCH',
+                    data: {
+                        status: status,
+                        notes: notes,
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        location.reload();
+                    },
+                    error: function(xhr) {
+                        alert('❌ Có lỗi xảy ra: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                    }
+                });
+            }
+        }
+
+        function unassignDriver(orderId) {
+            if (confirm('🔄 Hủy gán tài xế cho đơn hàng này?')) {
+                $.ajax({
+                    url: `/admin/orders/${orderId}/unassign-driver`,
+                    type: 'DELETE',
+                    data: {
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        location.reload();
+                    },
+                    error: function(xhr) {
+                        alert('❌ Có lỗi xảy ra: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                    }
+                });
+            }
+        }
+
+        // Giữ nguyên các function khác như showDriverModal, etc.
     </script>
 </x-admin-layout>

@@ -330,6 +330,7 @@
                     @if($order->driver_id)
                         <form action="{{ route('admin.orders.unassign-driver', $order) }}" method="POST">
                             @csrf
+                            @method('DELETE')  <!-- THÊM DÒNG NÀY -->
                             <button type="submit" class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded w-full">
                                 ❌ Hủy gán tài xế
                             </button>

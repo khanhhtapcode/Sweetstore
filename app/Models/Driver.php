@@ -134,10 +134,16 @@ class Driver extends Model
         return $query->where('status', self::STATUS_ACTIVE);
     }
 
-    // Scope để lấy tài xế có thể nhận đơn (active và không busy)
+    // FIXED: Scope để lấy tài xế có thể nhận đơn (active và không quá 3 đơn)
     public function scopeAvailable($query)
     {
-        return $query->where('status', self::STATUS_ACTIVE);
+        return $query->where('status', self::STATUS_ACTIVE)
+            ->where(function($q) {
+                $q->whereDoesntHave('currentOrders')
+                    ->orWhereHas('currentOrders', function($subQuery) {
+                        $subQuery->havingRaw('COUNT(*) < 3');
+                    });
+            });
     }
 
     // Scope để lấy tài xế đang bận
@@ -210,11 +216,22 @@ class Driver extends Model
         }
     }
 
-    // Kiểm tra xem tài xế có thể nhận thêm đơn không
+    // FIXED: Kiểm tra xem tài xế có thể nhận thêm đơn không
     public function canTakeNewOrder()
     {
-        return $this->status === self::STATUS_ACTIVE &&
-            $this->currentOrders()->count() < 3 && // Giới hạn tối đa 3 đơn cùng lúc
-            !$this->is_license_expired;
+        // Kiểm tra status active
+        if ($this->status !== self::STATUS_ACTIVE) {
+            return false;
+        }
+
+        // Kiểm tra bằng lái còn hạn
+        if ($this->is_license_expired) {
+            return false;
+        }
+
+        // Kiểm tra số đơn hiện tại (load fresh data)
+        $currentOrdersCount = $this->currentOrders()->count();
+
+        return $currentOrdersCount < 3;
     }
 }
