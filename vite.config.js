@@ -4,27 +4,17 @@ import laravel from 'laravel-vite-plugin';
 export default defineConfig({
     plugins: [
         laravel({
-            input: [
-                'resources/css/app.css',
-                'resources/js/app.js',
-            ],
+            input: ['resources/css/app.css', 'resources/js/app.js'],
             refresh: true,
         }),
     ],
     build: {
-        manifest: true,
+        manifest: 'manifest.json', // Đặt manifest ở root của outDir
         outDir: 'public/build',
         rollupOptions: {
             output: {
                 manualChunks: undefined,
-            }
-        }
+            },
+        },
     },
-    server: {
-        host: '0.0.0.0',
-        port: 5173,
-        hmr: {
-            host: 'localhost'
-        }
-    }
-});
+}); 
