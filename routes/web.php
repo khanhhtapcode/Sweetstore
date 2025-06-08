@@ -87,7 +87,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Order - Bulk Actions
     Route::post('orders/bulk-action', [OrderController::class, 'bulkAction'])->name('orders.bulk-action');
-    Route::post('orders/auto-assign-drivers', [OrderController::class, 'autoAssignDrivers'])->name('orders.auto-assign-drivers'); // ADDED THIS
+    Route::post('orders/auto-assign-drivers', [OrderController::class, 'autoAssignDrivers'])->name('orders.auto-assign-drivers');
     Route::get('orders/export', [OrderController::class, 'export'])->name('orders.export');
     Route::get('orders/{order}/invoice', [OrderController::class, 'printInvoice'])->name('orders.invoice');
 
@@ -120,39 +120,22 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
 // Chatbot Route
 Route::post('/chatbot/chat', [ChatbotController::class, 'chat'])->name('chatbot.chat');
-//
-Route::get('test-verify/{id}/{hash}', function (Request $request, $id, $hash) {
-    try {
-        \Log::info('Test verification accessed', [
-            'id' => $id,
-            'hash' => $hash,
-            'signed' => $request->hasValidSignature(),
-            'user_exists' => \App\Models\User::find($id) ? 'yes' : 'no'
-        ]);
 
-        $user = \App\Models\User::findOrFail($id);
+// Email Verification Routes - SỬ DỤNG CONTROLLER THAY VÌ CLOSURE
+Route::middleware('auth')->group(function () {
+    // Hiển thị trang thông báo verify email
+    Route::get('email/verify', [App\Http\Controllers\Auth\EmailVerificationPromptController::class, '__invoke'])
+        ->name('verification.notice');
 
-        // Kiểm tra hash
-        $expectedHash = sha1($user->getEmailForVerification());
-        $hashMatches = hash_equals($expectedHash, $hash);
+    // Xử lý verification link (sử dụng controller)
+    Route::get('email/verify/{id}/{hash}', [App\Http\Controllers\Auth\VerifyEmailController::class, '__invoke'])
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('verification.verify');
 
-        return response()->json([
-            'user_id' => $user->id,
-            'user_email' => $user->email,
-            'user_verified' => $user->hasVerifiedEmail(),
-            'expected_hash' => $expectedHash,
-            'provided_hash' => $hash,
-            'hash_matches' => $hashMatches,
-            'signature_valid' => $request->hasValidSignature(),
-            'app_url' => config('app.url'),
-            'app_key' => config('app.key') ? 'Set' : 'Not set'
-        ]);
+    // Gửi lại verification email
+    Route::post('email/verification-notification', [App\Http\Controllers\Auth\EmailVerificationNotificationController::class, 'store'])
+        ->middleware(['throttle:6,1'])
+        ->name('verification.send');
+});
 
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ], 500);
-    }
-})->middleware(['signed'])->name('test.verify');
 require __DIR__ . '/auth.php';

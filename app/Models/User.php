@@ -134,17 +134,4 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $this->update(['last_login_at' => now()]);
     }
-    public function sendEmailVerificationNotification()
-    {
-        $verificationUrl = \URL::temporarySignedRoute(
-            'test.verify', // THAY ĐỔI TẠM THỜI
-            \Carbon\Carbon::now()->addMinutes(60),
-            [
-                'id' => $this->getKey(),
-                'hash' => sha1($this->getEmailForVerification()),
-            ]
-        );
-
-        // Send email với URL mới...
-    }
 }
