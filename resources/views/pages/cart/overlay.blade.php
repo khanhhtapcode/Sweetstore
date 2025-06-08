@@ -41,7 +41,7 @@
             Tổng tiền: {{ number_format($totalPrice, 0, ',', '.') }} VNĐ
         </div>
         <div class="cart-actions mt-4">
-            <a href="{{ route('cart.show_cart') }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Xem chi tiết giỏ hàng</a>
+            <a href="{{ route('cart.show_cart') }}" class="bg-green-600 text-white font-semibold px-6 py-2 rounded-xl shadow-md transition duration-300 hover:bg-green-700 hover:scale-105">Xem chi tiết giỏ hàng</a>
         </div>
     @endif
 </div>
