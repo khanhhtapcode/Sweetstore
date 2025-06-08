@@ -815,25 +815,28 @@ class OrderController extends Controller
     /**
      * Find the best available driver for an order - FIXED VERSION
      */
+    /**
+     * Find the best available driver for an order - FIXED VERSION
+     */
     private function findBestDriver($totalWeight, $totalVolume, $deliveryAddress)
     {
         // Xác định loại xe cần thiết dựa trên trọng lượng và thể tích
         $requiredVehicleType = $this->determineRequiredVehicleType($totalWeight, $totalVolume);
 
-        // FIXED: Tìm tài xế phù hợp với logic đúng
-        $availableDrivers = Driver::where('status', Driver::STATUS_ACTIVE)
+        // FIXED: Query đúng cách không vi phạm ONLY_FULL_GROUP_BY
+        $availableDrivers = Driver::select('drivers.*')
+            ->where('status', Driver::STATUS_ACTIVE)
             ->where('vehicle_type', $requiredVehicleType)
-            ->where(function($query) {
-                // Tài xế không có đơn nào HOẶC có ít hơn 3 đơn
-                $query->whereDoesntHave('currentOrders')
-                    ->orWhereHas('currentOrders', function($subQuery) {
-                        // Đếm số đơn hiện tại
-                        $subQuery->selectRaw('COUNT(*)')
-                            ->whereIn('status', ['assigned', 'picked_up', 'delivering'])
-                            ->havingRaw('COUNT(*) < 3');
-                    });
+            ->whereDoesntHave('orders', function($query) {
+                $query->whereIn('status', ['assigned', 'picked_up', 'delivering']);
             })
-            ->withCount('currentOrders')
+            ->orWhereHas('orders', function($query) {
+                $query->whereIn('status', ['assigned', 'picked_up', 'delivering'])
+                    ->havingRaw('COUNT(*) < 3');
+            })
+            ->withCount(['orders as current_orders_count' => function($query) {
+                $query->whereIn('status', ['assigned', 'picked_up', 'delivering']);
+            }])
             ->get();
 
         if ($availableDrivers->isEmpty()) {
@@ -843,17 +846,19 @@ class OrderController extends Controller
 
             if ($currentIndex !== false) {
                 for ($i = $currentIndex + 1; $i < count($fallbackVehicles); $i++) {
-                    $availableDrivers = Driver::where('status', Driver::STATUS_ACTIVE)
+                    $availableDrivers = Driver::select('drivers.*')
+                        ->where('status', Driver::STATUS_ACTIVE)
                         ->where('vehicle_type', $fallbackVehicles[$i])
-                        ->where(function($query) {
-                            $query->whereDoesntHave('currentOrders')
-                                ->orWhereHas('currentOrders', function($subQuery) {
-                                    $subQuery->selectRaw('COUNT(*)')
-                                        ->whereIn('status', ['assigned', 'picked_up', 'delivering'])
-                                        ->havingRaw('COUNT(*) < 3');
-                                });
+                        ->whereDoesntHave('orders', function($query) {
+                            $query->whereIn('status', ['assigned', 'picked_up', 'delivering']);
                         })
-                        ->withCount('currentOrders')
+                        ->orWhereHas('orders', function($query) {
+                            $query->whereIn('status', ['assigned', 'picked_up', 'delivering'])
+                                ->havingRaw('COUNT(*) < 3');
+                        })
+                        ->withCount(['orders as current_orders_count' => function($query) {
+                            $query->whereIn('status', ['assigned', 'picked_up', 'delivering']);
+                        }])
                         ->get();
 
                     if ($availableDrivers->isNotEmpty()) {
