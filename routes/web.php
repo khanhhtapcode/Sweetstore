@@ -119,5 +119,33 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
 // Chatbot Route
 Route::post('/chatbot/chat', [ChatbotController::class, 'chat'])->name('chatbot.chat');
+//
+Route::get('/test-email', function() {
+    try {
+        $emailService = new \App\Services\EmailService();
+        $result = $emailService->sendEmail(
+            'hkkhanhpro@gmail.com',
+            'Test Email từ Sweet Store',
+            '<h1>🎉 Test thành công!</h1><p>PHPMailer hoạt động tốt trên Heroku!</p>'
+        );
 
+        return response()->json([
+            'success' => true,
+            'message' => 'Email sent successfully!',
+            'result' => $result
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('Test email failed: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'config' => [
+                'host' => env('MAIL_HOST'),
+                'port' => env('MAIL_PORT'),
+                'username' => env('MAIL_USERNAME') ? 'Set' : 'Not set',
+                'password' => env('MAIL_PASSWORD') ? 'Set' : 'Not set',
+            ]
+        ], 500);
+    }
+});
 require __DIR__ . '/auth.php';
