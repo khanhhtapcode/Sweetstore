@@ -12,6 +12,31 @@ Route::get('/debug-test', function () {
     ]);
 });
 
+// Route để xem users trong database
+Route::get('/debug-users', function () {
+    try {
+        $users = \App\Models\User::all(['id', 'email', 'email_verified_at', 'created_at']);
+
+        return response()->json([
+            'total_users' => $users->count(),
+            'users' => $users->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'email' => $user->email,
+                    'is_verified' => $user->hasVerifiedEmail(),
+                    'email_verified_at' => $user->email_verified_at,
+                    'created_at' => $user->created_at,
+                    'expected_hash' => sha1($user->getEmailForVerification())
+                ];
+            })
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage()
+        ]);
+    }
+});
+
 // Route test verification - KHÔNG middleware
 Route::get('/test-verify/{id}/{hash}', function ($id, $hash) {
     \Log::info('=== TEST VERIFY ACCESSED ===', [
