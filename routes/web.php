@@ -15,6 +15,7 @@ use App\Http\Controllers\RatingController;
 use App\Http\Controllers\RatingReplyController;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\Admin\DashboardController;
+use Illuminate\Http\Request;
 
 Route::get('/', function () {
     return view('welcome');
@@ -120,32 +121,51 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 // Chatbot Route
 Route::post('/chatbot/chat', [ChatbotController::class, 'chat'])->name('chatbot.chat');
 //
-Route::get('/test-email', function() {
-    try {
-        $emailService = new \App\Services\EmailService();
-        $result = $emailService->sendEmail(
-            'hkkhanhpro@gmail.com',
-            'Test Email từ Sweet Store',
-            '<h1>🎉 Test thành công!</h1><p>PHPMailer hoạt động tốt trên Heroku!</p>'
-        );
+Route::middleware('auth')->group(function () {
+    Route::get('verify-email', function () {
+        return view('auth.verify-email');
+    })->name('verification.notice');
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Email sent successfully!',
-            'result' => $result
+    Route::get('verify-email/{id}/{hash}', function (Request $request, $id, $hash) {
+        $user = \App\Models\User::findOrFail($id);
+
+        // Log để debug
+        \Log::info('Email verification attempt', [
+            'user_id' => $user->id,
+            'request_id' => $id,
+            'request_hash' => $hash,
+            'expected_hash' => sha1($user->getEmailForVerification()),
+            'user_verified' => $user->hasVerifiedEmail()
         ]);
-    } catch (\Exception $e) {
-        \Log::error('Test email failed: ' . $e->getMessage());
-        return response()->json([
-            'success' => false,
-            'error' => $e->getMessage(),
-            'config' => [
-                'host' => env('MAIL_HOST'),
-                'port' => env('MAIL_PORT'),
-                'username' => env('MAIL_USERNAME') ? 'Set' : 'Not set',
-                'password' => env('MAIL_PASSWORD') ? 'Set' : 'Not set',
-            ]
-        ], 500);
-    }
+
+        // Kiểm tra đã verify chưa
+        if ($user->hasVerifiedEmail()) {
+            return redirect('/dashboard')->with('verified', 'Email đã được xác thực!');
+        }
+
+        // Kiểm tra ID khớp không
+        if ($request->route('id') != $user->id) {
+            \Log::warning('User ID mismatch');
+            abort(403, 'Invalid verification link');
+        }
+
+        // Kiểm tra hash
+        if (!hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+            \Log::warning('Hash mismatch');
+            abort(403, 'Invalid verification hash');
+        }
+
+        // Mark email as verified
+        $user->markEmailAsVerified();
+        \Log::info('Email verified successfully', ['user_id' => $user->id]);
+
+        return redirect('/dashboard')->with('verified', 'Email đã được xác thực thành công! 🎉');
+
+    })->middleware(['signed'])->name('verification.verify');
+
+    Route::post('email/verification-notification', function (Request $request) {
+        $request->user()->sendEmailVerificationNotification();
+        return back()->with('status', 'verification-link-sent');
+    })->middleware(['throttle:6,1'])->name('verification.send');
 });
 require __DIR__ . '/auth.php';
