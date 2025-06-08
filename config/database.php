@@ -1,14 +1,6 @@
 <?php
 
 use Illuminate\Support\Str;
-if (isset($_ENV['mysql://tcwdso9tz1l3eu6g:s3kca8uzrv9g0sl5@u28rhuskh0x5paau.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/vohdzuzp74kvxw0u'])) {
-    $url = parse_url($_ENV['JAWSDB_URL']);
-    $_ENV['DB_HOST'] = $url['host'];
-    $_ENV['DB_PORT'] = $url['port'] ?? 3306;
-    $_ENV['DB_DATABASE'] = ltrim($url['path'], '/');
-    $_ENV['DB_USERNAME'] = $url['user'];
-    $_ENV['DB_PASSWORD'] = $url['pass'];
-}
 
 return [
     /*
@@ -37,6 +29,21 @@ return [
     */
 
     'connections' => [
+        'heroku' => [
+            'driver' => 'mysql',
+            'url' => env('JAWSDB_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '3306'),
+            'database' => env('DB_DATABASE', 'forge'),
+            'username' => env('DB_USERNAME', 'forge'),
+            'password' => env('DB_PASSWORD', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+            'engine' => null,
+        ],
 
         'sqlite' => [
             'driver' => 'sqlite',
