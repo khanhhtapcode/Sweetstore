@@ -139,9 +139,9 @@ Route::middleware('auth')->group(function () {
     })->middleware(['throttle:6,1'])->name('verification.send');
 });
 
-// Verification link - KHÔNG CẦN AUTH (Public route)
+// Verification link - HOÀN TOÀN ĐỘC LẬP (không middleware signed)
 Route::get('/verify-email/{id}/{hash}', [App\Http\Controllers\Auth\VerifyEmailController::class, '__invoke'])
-    ->middleware(['signed', 'throttle:6,1'])
+    ->middleware(['throttle:6,1'])
     ->name('verification.verify');
 
 require __DIR__ . '/auth.php';

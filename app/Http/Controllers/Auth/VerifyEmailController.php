@@ -9,90 +9,67 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\URL;
+use Carbon\Carbon;
 
 class VerifyEmailController extends Controller
 {
     /**
-     * Mark the user's email address as verified.
-     * KHÔNG CẦN AUTH - Xử lý public verification
+     * Verify email without session dependency
      */
     public function __invoke(Request $request): RedirectResponse
     {
         try {
-            Log::info('=== EMAIL VERIFICATION START ===');
+            Log::info('=== INDEPENDENT EMAIL VERIFICATION ===');
             Log::info('Full URL: ' . $request->fullUrl());
 
-            // Lấy user từ ID trong URL, KHÔNG từ auth
             $userId = $request->route('id');
             $hash = $request->route('hash');
+            $expires = $request->query('expires');
+            $signature = $request->query('signature');
 
-            Log::info('Verification attempt: ', [
+            Log::info('Verification data: ', [
                 'user_id' => $userId,
-                'hash' => $hash
+                'hash' => $hash,
+                'expires' => $expires,
+                'signature' => $signature,
+                'current_time' => time()
             ]);
 
-            // Tìm user theo ID
+            // 1. Kiểm tra user tồn tại
             $user = User::find($userId);
-
             if (!$user) {
                 Log::error('User not found: ' . $userId);
-                return redirect()->route('login')->with('error', 'Người dùng không tồn tại!');
+                return $this->failedVerification('Người dùng không tồn tại!');
             }
 
-            Log::info('User found: ', [
-                'id' => $user->id,
-                'email' => $user->email,
-                'is_verified' => $user->hasVerifiedEmail()
-            ]);
-
-            // Kiểm tra user đã verify chưa
+            // 2. Kiểm tra đã verify chưa
             if ($user->hasVerifiedEmail()) {
                 Log::info('User already verified');
-
-                // Đăng nhập user và redirect
-                Auth::login($user);
-
-                if ($user->isAdmin()) {
-                    return redirect()->route('admin.dashboard')->with('verified', 'Email đã được xác thực!');
-                }
-
-                return redirect()->route('dashboard')->with('verified', 'Email đã được xác thực!');
+                return $this->successfulLogin($user, 'Email đã được xác thực trước đó!');
             }
 
-            // Verify hash
-            $expectedHash = sha1($user->getEmailForVerification());
-
-            if (!hash_equals($expectedHash, $hash)) {
-                Log::warning('Hash mismatch: ', [
-                    'expected' => $expectedHash,
-                    'provided' => $hash
-                ]);
-                return redirect()->route('login')->with('error', 'Link xác thực không hợp lệ!');
+            // 3. Kiểm tra link đã hết hạn chưa
+            if ($expires && time() > $expires) {
+                Log::warning('Link expired');
+                return $this->failedVerification('Link xác thực đã hết hạn! Vui lòng yêu cầu gửi lại.');
             }
 
-            // Mark email as verified
+            // 4. Verify hash và signature MANUAL (không dùng middleware signed)
+            if (!$this->verifySignature($request, $user)) {
+                Log::warning('Invalid signature or hash');
+                return $this->failedVerification('Link xác thực không hợp lệ!');
+            }
+
+            // 5. Mark email as verified
             if ($user->markEmailAsVerified()) {
                 event(new Verified($user));
                 Log::info('Email verified successfully for user: ' . $user->id);
 
-                // TỰ ĐỘNG ĐĂNG NHẬP USER SAU KHI VERIFY
-                Auth::login($user);
-
-                // Update last login
-                $user->updateLastLogin();
-
-                // Redirect theo role
-                if ($user->isAdmin()) {
-                    return redirect()->route('admin.dashboard')
-                        ->with('verified', 'Email đã được xác thực thành công! Chào mừng bạn! 🎉');
-                }
-
-                return redirect()->route('dashboard')
-                    ->with('verified', 'Email đã được xác thực thành công! Chào mừng bạn! 🎉');
+                return $this->successfulLogin($user, 'Email đã được xác thực thành công! Chào mừng bạn! 🎉');
             }
 
-            Log::error('Failed to mark email as verified');
-            return redirect()->route('login')->with('error', 'Không thể xác thực email. Vui lòng thử lại!');
+            return $this->failedVerification('Không thể xác thực email. Vui lòng thử lại!');
 
         } catch (\Exception $e) {
             Log::error('Email verification exception: ', [
@@ -101,7 +78,82 @@ class VerifyEmailController extends Controller
                 'line' => $e->getLine()
             ]);
 
-            return redirect()->route('login')->with('error', 'Có lỗi xảy ra khi xác thực email!');
+            return $this->failedVerification('Có lỗi xảy ra khi xác thực email!');
         }
+    }
+
+    /**
+     * Verify signature manually without session dependency
+     */
+    private function verifySignature(Request $request, User $user): bool
+    {
+        try {
+            $hash = $request->route('hash');
+            $expectedHash = sha1($user->getEmailForVerification());
+
+            // Kiểm tra hash trước
+            if (!hash_equals($expectedHash, $hash)) {
+                Log::warning('Hash mismatch', [
+                    'expected' => $expectedHash,
+                    'provided' => $hash,
+                    'email' => $user->getEmailForVerification()
+                ]);
+                return false;
+            }
+
+            // Tạo lại URL để verify signature
+            $url = URL::temporarySignedRoute(
+                'verification.verify',
+                Carbon::createFromTimestamp($request->query('expires', time() + 3600)),
+                [
+                    'id' => $user->getKey(),
+                    'hash' => $hash,
+                ]
+            );
+
+            // Lấy signature từ URL được tạo
+            $urlParts = parse_url($url);
+            parse_str($urlParts['query'], $expectedParams);
+            $expectedSignature = $expectedParams['signature'] ?? '';
+
+            $providedSignature = $request->query('signature');
+
+            Log::info('Signature verification: ', [
+                'expected_signature' => $expectedSignature,
+                'provided_signature' => $providedSignature,
+                'match' => hash_equals($expectedSignature, $providedSignature)
+            ]);
+
+            return hash_equals($expectedSignature, $providedSignature);
+
+        } catch (\Exception $e) {
+            Log::error('Signature verification failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Handle successful verification and login
+     */
+    private function successfulLogin(User $user, string $message): RedirectResponse
+    {
+        // Đăng nhập user
+        Auth::login($user);
+        $user->updateLastLogin();
+
+        // Redirect theo role
+        if ($user->isAdmin()) {
+            return redirect()->route('admin.dashboard')->with('verified', $message);
+        }
+
+        return redirect()->route('dashboard')->with('verified', $message);
+    }
+
+    /**
+     * Handle failed verification
+     */
+    private function failedVerification(string $message): RedirectResponse
+    {
+        return redirect()->route('login')->with('error', $message);
     }
 }
