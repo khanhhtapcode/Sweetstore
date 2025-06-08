@@ -67,16 +67,6 @@
                             Gửi lại email xác thực qua PHPMailer
                         </button>
                     </form>
-
-                    <!-- Test PHPMailer Button (chỉ để test) -->
-                    <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <p class="text-xs text-blue-600 mb-2">🔧 Test PHPMailer (chỉ để kiểm tra):</p>
-                        <a href="{{ route('test.phpmailer') }}"
-                           class="inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-xs font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            📧 Test gửi email PHPMailer
-                        </a>
-                    </div>
-
                     <!-- Instructions -->
                     <div class="bg-amber-50 border border-amber-200 rounded-md p-4 mb-6">
                         <div class="flex">
