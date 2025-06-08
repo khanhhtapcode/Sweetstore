@@ -121,19 +121,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 // Chatbot Route
 Route::post('/chatbot/chat', [ChatbotController::class, 'chat'])->name('chatbot.chat');
 
-// Email Verification Routes - KHỚP VỚI URL TRONG EMAIL
+// Email Verification Routes
 Route::middleware('auth')->group(function () {
-    // Hiển thị trang thông báo verify email
+    // Hiển thị trang thông báo verify email (CẦN AUTH)
     Route::get('/verify-email', function () {
         return view('auth.verify-email');
     })->name('verification.notice');
 
-    // Xử lý verification link - ĐÚNG PATTERN: /verify-email/{id}/{hash}
-    Route::get('/verify-email/{id}/{hash}', [App\Http\Controllers\Auth\VerifyEmailController::class, '__invoke'])
-        ->middleware(['signed', 'throttle:6,1'])
-        ->name('verification.verify');
-
-    // Gửi lại verification email
+    // Gửi lại verification email (CẦN AUTH)
     Route::post('/email/verification-notification', function (Request $request) {
         if ($request->user()->hasVerifiedEmail()) {
             return redirect()->route('dashboard');
@@ -143,5 +138,10 @@ Route::middleware('auth')->group(function () {
         return back()->with('status', 'verification-link-sent');
     })->middleware(['throttle:6,1'])->name('verification.send');
 });
+
+// Verification link - KHÔNG CẦN AUTH (Public route)
+Route::get('/verify-email/{id}/{hash}', [App\Http\Controllers\Auth\VerifyEmailController::class, '__invoke'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');
 
 require __DIR__ . '/auth.php';
