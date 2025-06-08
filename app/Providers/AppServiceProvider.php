@@ -23,5 +23,8 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }
+        \Illuminate\Notifications\ChannelManager::extend('custom', function () {
+            return new \App\Channels\CustomMailChannel();
+        });
     }
 }
