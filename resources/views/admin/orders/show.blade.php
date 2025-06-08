@@ -1,6 +1,6 @@
 <x-admin-layout>
     <x-slot name="header">
-        Chi Tiết Đơn Hàng #{{ $order->order_number ?? $order->id }} 📋
+        Chi Tiết Đơn Hàng #{{ $order->order_number }} 📋
     </x-slot>
 
     <!-- Thông báo -->
@@ -41,19 +41,8 @@
             <div class="bg-white rounded-lg shadow overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                     <h3 class="text-lg font-semibold text-gray-900">📋 Thông tin đơn hàng</h3>
-                    @php
-                        $statusConfig = [
-                            'pending' => ['class' => 'bg-yellow-100 text-yellow-800', 'text' => 'Chờ xử lý'],
-                            'confirmed' => ['class' => 'bg-blue-100 text-blue-800', 'text' => 'Đã xác nhận'],
-                            'preparing' => ['class' => 'bg-purple-100 text-purple-800', 'text' => 'Đang chuẩn bị'],
-                            'delivering' => ['class' => 'bg-indigo-100 text-indigo-800', 'text' => 'Đang giao'],
-                            'completed' => ['class' => 'bg-green-100 text-green-800', 'text' => 'Hoàn thành'],
-                            'cancelled' => ['class' => 'bg-red-100 text-red-800', 'text' => 'Đã hủy']
-                        ];
-                        $config = $statusConfig[$order->status] ?? $statusConfig['pending'];
-                    @endphp
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $config['class'] }}">
-                        {{ $config['text'] }}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $order->status_name == 'Chờ xác nhận' ? 'bg-yellow-100 text-yellow-800' : ($order->status_name == 'Đã xác nhận' ? 'bg-blue-100 text-blue-800' : ($order->status_name == 'Đang chuẩn bị' ? 'bg-purple-100 text-purple-800' : ($order->status_name == 'Sẵn sàng giao' ? 'bg-cyan-100 text-cyan-800' : ($order->status_name == 'Đã gán tài xế' ? 'bg-indigo-100 text-indigo-800' : ($order->status_name == 'Đã lấy hàng' ? 'bg-orange-100 text-orange-800' : ($order->status_name == 'Đang giao hàng' ? 'bg-blue-100 text-blue-800' : ($order->status_name == 'Đã giao' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'))))))) }}">
+                        {{ $order->status_name }}
                     </span>
                 </div>
                 <div class="p-6">
@@ -61,7 +50,7 @@
                         <div class="space-y-3">
                             <div>
                                 <p class="text-sm text-gray-600">🔢 Mã đơn hàng:</p>
-                                <p class="font-medium">#{{ $order->order_number ?? $order->id }}</p>
+                                <p class="font-medium">#{{ $order->order_number }}</p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">📅 Ngày tạo:</p>
@@ -71,20 +60,33 @@
                                 <p class="text-sm text-gray-600">💳 Phương thức thanh toán:</p>
                                 <p class="font-medium">
                                     @switch($order->payment_method)
-                                        @case('cash') 💵 Tiền mặt @break
+                                        @case('cod') 💵 Thu hộ (COD) @break
                                         @case('bank_transfer') 🏦 Chuyển khoản @break
                                         @case('credit_card') 💳 Thẻ tín dụng @break
-                                        @case('online') 🌐 Thanh toán online @break
-                                        @default {{ $order->payment_method }}
+                                        @default {{ $order->payment_method ?? 'COD' }}
                                     @endswitch
                                 </p>
                             </div>
+                            @if($order->assigned_at)
+                                <div>
+                                    <p class="text-sm text-gray-600">📋 Thời gian gán tài xế:</p>
+                                    <p class="font-medium">{{ $order->assigned_at->format('d/m/Y H:i') }}</p>
+                                </div>
+                            @endif
                         </div>
                         <div class="space-y-3">
-                            <div>
-                                <p class="text-sm text-gray-600">🚚 Ngày giao hàng:</p>
-                                <p class="font-medium">{{ $order->delivery_date ? $order->delivery_date->format('d/m/Y') : 'Chưa xác định' }}</p>
-                            </div>
+                            @if($order->picked_up_at)
+                                <div>
+                                    <p class="text-sm text-gray-600">📦 Thời gian lấy hàng:</p>
+                                    <p class="font-medium">{{ $order->picked_up_at->format('d/m/Y H:i') }}</p>
+                                </div>
+                            @endif
+                            @if($order->delivered_at)
+                                <div>
+                                    <p class="text-sm text-gray-600">✅ Thời gian giao hàng:</p>
+                                    <p class="font-medium">{{ $order->delivered_at->format('d/m/Y H:i') }}</p>
+                                </div>
+                            @endif
                             <div>
                                 <p class="text-sm text-gray-600">🔄 Cập nhật cuối:</p>
                                 <p class="font-medium">{{ $order->updated_at->format('d/m/Y H:i') }}</p>
@@ -122,12 +124,53 @@
                         <div class="space-y-3">
                             <div>
                                 <p class="text-sm text-gray-600">📍 Địa chỉ giao hàng:</p>
-                                <p class="font-medium">{{ $order->shipping_address ?? $order->customer_address }}</p>
+                                <p class="font-medium">{{ $order->customer_address }}</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Thông tin tài xế -->
+            @if($order->driver)
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">🚚 Thông tin tài xế</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-3">
+                                <div>
+                                    <p class="text-sm text-gray-600">👨‍💼 Tên tài xế:</p>
+                                    <p class="font-medium">{{ $order->driver->name }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">📞 Số điện thoại:</p>
+                                    <p class="font-medium">{{ $order->driver->phone }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">🚗 Loại xe:</p>
+                                    <p class="font-medium">{{ $order->driver->vehicle_type_name }}</p>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <div>
+                                    <p class="text-sm text-gray-600">🏷️ Mã tài xế:</p>
+                                    <p class="font-medium">{{ $order->driver->driver_code }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">🚙 Biển số xe:</p>
+                                    <p class="font-medium">{{ $order->driver->vehicle_number }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">⭐ Đánh giá:</p>
+                                    <p class="font-medium">{{ $order->driver->formatted_rating }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             <!-- Chi tiết sản phẩm -->
             <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -202,12 +245,6 @@
                                 <span class="text-sm text-gray-600">💳 Tạm tính:</span>
                                 <span class="text-sm font-medium">{{ number_format($subtotal) }}₫</span>
                             </div>
-                            @if($order->discount > 0)
-                                <div class="flex justify-between">
-                                    <span class="text-sm text-gray-600">🎫 Giảm giá ({{ $order->discount }}%):</span>
-                                    <span class="text-sm font-medium text-green-600">-{{ number_format($subtotal * $order->discount / 100) }}₫</span>
-                                </div>
-                            @endif
                             <div class="border-t pt-2 flex justify-between">
                                 <span class="text-lg font-bold">💰 Tổng cộng:</span>
                                 <span class="text-lg font-bold text-blue-600">{{ number_format($order->total_amount) }}₫</span>
@@ -218,13 +255,24 @@
             </div>
 
             <!-- Ghi chú -->
-            @if($order->notes)
+            @if($order->notes || $order->delivery_notes)
                 <div class="bg-white rounded-lg shadow overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-200">
                         <h3 class="text-lg font-semibold text-gray-900">💬 Ghi chú</h3>
                     </div>
-                    <div class="p-6">
-                        <p class="text-gray-700">{{ $order->notes }}</p>
+                    <div class="p-6 space-y-4">
+                        @if($order->notes)
+                            <div>
+                                <p class="text-sm font-medium text-gray-700">Ghi chú đơn hàng:</p>
+                                <p class="text-gray-700">{{ $order->notes }}</p>
+                            </div>
+                        @endif
+                        @if($order->delivery_notes)
+                            <div>
+                                <p class="text-sm font-medium text-gray-700">Ghi chú giao hàng:</p>
+                                <p class="text-gray-700">{{ $order->delivery_notes }}</p>
+                            </div>
+                        @endif
                     </div>
                 </div>
             @endif
@@ -237,25 +285,77 @@
                 <div class="px-6 py-4 border-b border-gray-200">
                     <h3 class="text-lg font-semibold text-gray-900">⚡ Hành động nhanh</h3>
                 </div>
-                <div class="p-6">
-                    <form action="{{ route('admin.orders.update-status', $order) }}" method="POST" class="mb-4">
+                <div class="p-6 space-y-4">
+                    <!-- Cập nhật trạng thái -->
+                    <form action="{{ route('admin.orders.update-status', $order) }}" method="POST">
                         @csrf
                         @method('PATCH')
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Cập nhật trạng thái:</label>
                             <select name="status" class="w-full border border-gray-300 rounded px-3 py-2 text-sm">
-                                <option value="pending" {{ $order->status == 'pending' ? 'selected' : '' }}>⏳ Chờ xử lý</option>
-                                <option value="confirmed" {{ $order->status == 'confirmed' ? 'selected' : '' }}>✅ Đã xác nhận</option>
-                                <option value="preparing" {{ $order->status == 'preparing' ? 'selected' : '' }}>👨‍🍳 Đang chuẩn bị</option>
-                                <option value="delivering" {{ $order->status == 'delivering' ? 'selected' : '' }}>🚚 Đang giao</option>
-                                <option value="completed" {{ $order->status == 'completed' ? 'selected' : '' }}>🎉 Hoàn thành</option>
-                                <option value="cancelled" {{ $order->status == 'cancelled' ? 'selected' : '' }}>❌ Đã hủy</option>
+                                @foreach(\App\Models\Order::getStatuses() as $value => $label)
+                                    <option value="{{ $value }}" {{ $order->status == $value ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
                             </select>
                         </div>
                         <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full">
                             🔄 Cập nhật trạng thái
                         </button>
                     </form>
+
+                    <!-- Gán tài xế -->
+                    @if($order->can_assign_driver)
+                        <form action="{{ route('admin.orders.assign-driver', $order) }}" method="POST">
+                            @csrf
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Gán tài xế:</label>
+                                <select name="driver_id" class="w-full border border-gray-300 rounded px-3 py-2 text-sm">
+                                    <option value="">-- Chọn tài xế --</option>
+                                    @foreach($availableDrivers as $driver)
+                                        <option value="{{ $driver->id }}" {{ $order->driver_id == $driver->id ? 'selected' : '' }}>
+                                            {{ $driver->name }} ({{ $driver->driver_code }}) - {{ $driver->vehicle_type_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full">
+                                🚚 Gán tài xế
+                            </button>
+                        </form>
+                    @endif
+
+                    <!-- Hủy gán tài xế -->
+                    @if($order->driver_id)
+                        <form action="{{ route('admin.orders.unassign-driver', $order) }}" method="POST">
+                            @csrf
+                            <button type="submit" class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded w-full">
+                                ❌ Hủy gán tài xế
+                            </button>
+                        </form>
+                    @endif
+
+                    <!-- Cập nhật trạng thái giao hàng -->
+                    @if($order->can_update_delivery_status)
+                        <form action="{{ route('admin.orders.update-delivery-status', $order) }}" method="POST">
+                            @csrf
+                            @method('PATCH')
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Trạng thái giao hàng:</label>
+                                <select name="status" class="w-full border border-gray-300 rounded px-3 py-2 text-sm mb-2">
+                                    <option value="picked_up" {{ $order->status == 'picked_up' ? 'selected' : '' }}>📦 Đã lấy hàng</option>
+                                    <option value="delivering" {{ $order->status == 'delivering' ? 'selected' : '' }}>🚚 Đang giao hàng</option>
+                                    <option value="delivered" {{ $order->status == 'delivered' ? 'selected' : '' }}>✅ Đã giao hàng</option>
+                                </select>
+                                <textarea name="notes" placeholder="Ghi chú (tùy chọn)"
+                                          class="w-full border border-gray-300 rounded px-3 py-2 text-sm" rows="2"></textarea>
+                            </div>
+                            <button type="submit" class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded w-full">
+                                📋 Cập nhật giao hàng
+                            </button>
+                        </form>
+                    @endif
 
                     <div class="grid grid-cols-2 gap-3">
                         <a href="{{ route('admin.orders.edit', $order) }}"
@@ -305,13 +405,25 @@
                             </div>
                         </div>
                     </div>
+
+                    @if($order->delivery_time)
+                        <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                            <div class="flex items-center">
+                                <div class="text-purple-600 text-2xl mr-3">⏱️</div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Thời gian giao hàng</p>
+                                    <p class="text-sm font-medium text-purple-600">{{ $order->delivery_time }} phút</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
 
             <!-- Lịch sử -->
             <div class="bg-white rounded-lg shadow overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900">📋 Lịch sử</h3>
+                    <h3 class="text-lg font-semibold text-gray-900">📋 Lịch sử đơn hàng</h3>
                 </div>
                 <div class="p-6">
                     <div class="space-y-4">
@@ -325,7 +437,43 @@
                             </div>
                         </div>
 
-                        @if($order->updated_at != $order->created_at)
+                        @if($order->assigned_at)
+                            <div class="flex items-start space-x-3">
+                                <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                    <span class="text-green-600 text-sm">🚚</span>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-gray-900">Đã gán tài xế</p>
+                                    <p class="text-xs text-gray-500">{{ $order->assigned_at->format('d/m/Y H:i') }}</p>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($order->picked_up_at)
+                            <div class="flex items-start space-x-3">
+                                <div class="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                                    <span class="text-orange-600 text-sm">📦</span>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-gray-900">Đã lấy hàng</p>
+                                    <p class="text-xs text-gray-500">{{ $order->picked_up_at->format('d/m/Y H:i') }}</p>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($order->delivered_at)
+                            <div class="flex items-start space-x-3">
+                                <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                    <span class="text-green-600 text-sm">✅</span>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-gray-900">Đã giao hàng thành công</p>
+                                    <p class="text-xs text-gray-500">{{ $order->delivered_at->format('d/m/Y H:i') }}</p>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($order->updated_at != $order->created_at && !$order->delivered_at)
                             <div class="flex items-start space-x-3">
                                 <div class="flex-shrink-0 w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
                                     <span class="text-yellow-600 text-sm">✏️</span>
@@ -379,7 +527,7 @@
         // Print styles
         const printStyles = `
             @media print {
-                .bg-gray-500, .bg-yellow-500, .bg-blue-500, .bg-red-500 {
+                .bg-gray-500, .bg-yellow-500, .bg-blue-500, .bg-red-500, .bg-green-500, .bg-orange-500, .bg-purple-500 {
                     display: none !important;
                 }
                 .shadow, .rounded-lg {
@@ -389,11 +537,38 @@
                 .border-b {
                     border-bottom: 2px solid #000 !important;
                 }
+                .grid {
+                    display: block !important;
+                }
+                .lg\\:col-span-2 {
+                    width: 100% !important;
+                }
+                .space-y-6 > * + * {
+                    margin-top: 1rem !important;
+                }
             }
         `;
 
         const styleSheet = document.createElement('style');
         styleSheet.textContent = printStyles;
         document.head.appendChild(styleSheet);
+
+        // Form validation
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '⏳ Đang xử lý...';
+
+                    // Re-enable after 3 seconds to prevent permanent disable
+                    setTimeout(() => {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }, 3000);
+                }
+            });
+        });
     </script>
 </x-admin-layout>

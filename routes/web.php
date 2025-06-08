@@ -67,9 +67,7 @@ Route::post('/ratings/{rating}/replies', [RatingReplyController::class, 'store']
 
 // Admin Routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/', function () {
-        return view('admin.dashboard');
-    })->name('dashboard');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('categories', CategoryController::class);
     Route::resource('products', AdminProductController::class);
@@ -77,8 +75,19 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('users', UserController::class);
     Route::resource('drivers', DriverController::class);
 
-    // Order routes
+    // Order routes - Status và delivery
     Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
+    Route::patch('orders/{order}/delivery-status', [OrderController::class, 'updateDeliveryStatus'])->name('orders.update-delivery-status');
+
+    // Order - Driver Assignment
+    Route::post('orders/{order}/assign-driver', [OrderController::class, 'assignDriver'])->name('orders.assign-driver');
+    Route::delete('orders/{order}/unassign-driver', [OrderController::class, 'unassignDriver'])->name('orders.unassign-driver');
+    Route::get('orders/{order}/suggested-drivers', [OrderController::class, 'getSuggestedDrivers'])->name('orders.suggested-drivers');
+
+    // Order - Bulk Actions
+    Route::post('orders/bulk-action', [OrderController::class, 'bulkAction'])->name('orders.bulk-action');
+    Route::get('orders/export', [OrderController::class, 'export'])->name('orders.export');
+    Route::get('orders/{order}/invoice', [OrderController::class, 'printInvoice'])->name('orders.invoice');
 
     // Product routes
     Route::post('products/{product}/update-stock', [AdminProductController::class, 'updateStock'])->name('products.update-stock');
@@ -99,21 +108,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('drivers/export', [DriverController::class, 'export'])->name('drivers.export');
     Route::get('drivers/performance', [DriverController::class, 'performanceReport'])->name('drivers.performance');
 
-    // Order routes với driver management
-    Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
-    Route::post('orders/{order}/assign-driver', [OrderController::class, 'assignDriver'])->name('orders.assign-driver');
-    Route::post('orders/{order}/unassign-driver', [OrderController::class, 'unassignDriver'])->name('orders.unassign-driver');
-    Route::patch('orders/{order}/delivery-status', [OrderController::class, 'updateDeliveryStatus'])->name('orders.update-delivery-status');
-    Route::post('orders/auto-assign-drivers', [OrderController::class, 'autoAssignDrivers'])->name('orders.auto-assign-drivers');
-    Route::post('orders/bulk-update-status', [OrderController::class, 'bulkUpdateStatus'])->name('orders.bulk-update-status');
-
-// Driver-specific order routes
-    Route::get('orders/driver-dashboard', [OrderController::class, 'driverDashboard'])->name('orders.driver-dashboard');
-    Route::get('drivers/{driver}/optimize-route', [OrderController::class, 'optimizeDeliveryRoute'])->name('orders.optimize-route');
-
-// Additional order routes
-    Route::get('orders/statistics', [OrderController::class, 'statistics'])->name('orders.statistics');
-    Route::get('orders/{order}/invoice', [OrderController::class, 'printInvoice'])->name('orders.invoice');
     // Dashboard API routes
     Route::get('/dashboard/revenue-data', [DashboardController::class, 'revenueData'])->name('dashboard.revenue-data');
     Route::get('/dashboard/top-products', [DashboardController::class, 'topProducts'])->name('dashboard.top-products');
