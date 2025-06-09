@@ -58,8 +58,7 @@ class DriverRatingController extends Controller
     {
         $orderToRate = Order::where('user_id', Auth::id())
             ->where('status', 'delivered')
-            ->leftJoin('driver_ratings', 'orders.id', '=', 'driver_ratings.order_id')
-            ->whereNull('driver_ratings.id')
+            ->whereDoesntHave('driverRating') // Sử dụng relationship thay vì join
             ->latest('delivered_at')
             ->with('driver')
             ->first();
@@ -77,28 +76,5 @@ class DriverRatingController extends Controller
 
         session(['skip_rating' => true]);
         return redirect()->route('home')->with('success', 'Đã bỏ qua đánh giá.');
-    }
-    public function orderHistory(Request $request)
-    {
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
-
-        $query = Order::with(['orderItems.product', 'driver', 'driverRating'])
-            ->where('user_id', Auth::id());
-
-        // Filter by status if provided
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        // Search by order number
-        if ($request->filled('search')) {
-            $query->where('order_number', 'like', '%' . $request->search . '%');
-        }
-
-        $orders = $query->latest()->paginate(10)->withQueryString();
-
-        return view('pages.orders.history', compact('orders'));
     }
 }

@@ -27,13 +27,8 @@
                class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded inline-flex items-center">
                 <span class="mr-2">📊</span> Xuất Excel
             </a>
-            <a href="{{ route('admin.drivers.performance') }}"
-               class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded inline-flex items-center">
-                <span class="mr-2">📈</span> Báo Cáo
-            </a>
         </div>
     </div>
-
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
         <form method="GET" action="{{ route('admin.drivers.index') }}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">

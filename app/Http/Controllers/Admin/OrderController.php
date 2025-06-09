@@ -89,7 +89,7 @@ class OrderController extends Controller
             'products.*.price' => 'required|numeric|min:0',
             'total_amount' => 'required|numeric|min:0',
             'status' => 'required|in:' . implode(',', array_keys(Order::getStatuses())),
-            'payment_method' => 'nullable|in:cod,bank_transfer,credit_card',
+            'payment_method' => 'nullable|in:cod,bank_transfer,credit_card','vnpay',
             'driver_id' => 'nullable|exists:drivers,id',
             'notes' => 'nullable|string|max:1000'
         ], [

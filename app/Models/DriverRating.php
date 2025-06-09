@@ -19,7 +19,7 @@ class DriverRating extends Model
     ];
 
     protected $casts = [
-        'rated_at' => 'datetime', // Chuyển đổi rated_at thành đối tượng Carbon
+        'rated_at' => 'datetime',
     ];
 
     /**
@@ -45,9 +45,6 @@ class DriverRating extends Model
     {
         return $this->belongsTo(Order::class, 'order_id');
     }
-    public function updateRating()
-    {
-        $averageRating = $this->driverRatings()->avg('rating');
-        $this->update(['average_rating' => round($averageRating, 1)]);
-    }
+
+    // XÓA METHOD updateRating() - Đây là nguyên nhân gây lỗi
 }
