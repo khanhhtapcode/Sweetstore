@@ -58,8 +58,7 @@ class DriverRatingController extends Controller
     {
         $orderToRate = Order::where('user_id', Auth::id())
             ->where('status', 'delivered')
-            ->leftJoin('driver_ratings', 'orders.id', '=', 'driver_ratings.order_id')
-            ->whereNull('driver_ratings.id')
+            ->whereDoesntHave('driverRating') // Sử dụng relationship thay vì join
             ->latest('delivered_at')
             ->with('driver')
             ->first();
