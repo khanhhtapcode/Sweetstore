@@ -260,7 +260,12 @@
                 <label for="comment" class="block font-medium text-gray-700">Nhận xét:</label>
                 <textarea name="comment" id="comment" rows="3" placeholder="Tài xế thân thiện, giao nhanh..." class="w-full mt-1 border rounded px-3 py-2"></textarea>
             </div>
-
+            <p class="text-sm text-gray-500">
+                Đánh giá của bạn sẽ giúp chúng tôi cải thiện dịch vụ giao hàng.
+            </p>
+            <p class="text-sm text-gray-500">
+                Nếu bạn không muốn đánh giá, có thể bỏ qua bước này và có thể đánh giá trong phần lịch sử đơn hàng.
+            </p>
             <div class="flex justify-between items-center mt-4">
                 <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-xl hover:bg-blue-700 transition">Gửi đánh giá</button>
                 <button type="button" id="driverRatingSkip" onclick="skipDriverRating(event)" class="text-gray-500 hover:text-black">Bỏ qua</button>

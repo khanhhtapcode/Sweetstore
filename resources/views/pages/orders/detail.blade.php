@@ -147,6 +147,10 @@
         <div class="mt-4 p-3 bg-gray-50 rounded">
             <p class="text-sm text-gray-600">🚗 Tài xế:</p>
             <p class="font-medium mt-1">{{ $order->driver->name }}</p>
+            <p class="font-medium mt-1">📞 Số điện thoại: {{ $order->driver->phone }}</p>
+            <p class="text-sm text-gray-600 mt-2">🚚 Loại xe: {{ $order->driver->vehicle_type}}</p>
+            <p class="text-sm text-gray-600 mt-2"> Biển số: {{ $order->driver->vehicle_number }}</p>
+
             @if($order->driver->average_rating)
             <p class="text-sm text-gray-600 mt-2">🌟 Điểm trung bình:</p>
             <p class="text-yellow-500 text-xl">
