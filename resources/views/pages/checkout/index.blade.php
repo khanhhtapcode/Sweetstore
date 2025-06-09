@@ -64,8 +64,13 @@
                                     </label>
                                     <input type="tel" name="customer_phone" id="customer_phone"
                                            value="{{ old('customer_phone') }}"
+                                           pattern="0[0-9]{9}"
+                                           maxlength="10"
+                                           placeholder="0123456789"
+                                           title="Số điện thoại phải bắt đầu bằng 0 và có đúng 10 chữ số"
                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('customer_phone') border-red-500 @enderror"
                                            required>
+                                    <div id="phone-error" class="text-red-500 text-xs mt-1 hidden">Số điện thoại phải bắt đầu bằng 0 và có đúng 10 chữ số</div>
                                     @error('customer_phone')
                                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                     @enderror
@@ -98,7 +103,7 @@
                                         <!-- COD -->
                                         <label class="flex items-center p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 transition-colors">
                                             <input type="radio" name="payment_method" value="cod" class="mr-3"
-                                                   {{ old('payment_method', 'cod') === 'cod' ? 'checked' : '' }}>
+                                                {{ old('payment_method', 'cod') === 'cod' ? 'checked' : '' }}>
                                             <div class="flex items-center flex-1">
                                                 <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center mr-3">
                                                     💵
@@ -113,7 +118,7 @@
                                         <!-- Bank Transfer -->
                                         <label class="flex items-center p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 transition-colors">
                                             <input type="radio" name="payment_method" value="bank_transfer" class="mr-3"
-                                                   {{ old('payment_method') === 'bank_transfer' ? 'checked' : '' }}>
+                                                {{ old('payment_method') === 'bank_transfer' ? 'checked' : '' }}>
                                             <div class="flex items-center flex-1">
                                                 <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                                                     🏦
@@ -128,7 +133,7 @@
                                         <!-- VNPay -->
                                         <label class="flex items-center p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 transition-colors">
                                             <input type="radio" name="payment_method" value="vnpay" class="mr-3"
-                                                   {{ old('payment_method') === 'vnpay' ? 'checked' : '' }} onclick="submitVnpayForm()">
+                                                {{ old('payment_method') === 'vnpay' ? 'checked' : '' }}>
                                             <div class="flex items-center flex-1">
                                                 <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center mr-3 border border-gray-200">
                                                     <img src="https://vnpay.vn/assets/images/logo-vnpay.png"
@@ -144,7 +149,7 @@
                                         <!-- Credit Card -->
                                         <label class="flex items-center p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 transition-colors">
                                             <input type="radio" name="payment_method" value="credit_card" class="mr-3"
-                                                   {{ old('payment_method') === 'credit_card' ? 'checked' : '' }}>
+                                                {{ old('payment_method') === 'credit_card' ? 'checked' : '' }}>
                                             <div class="flex items-center flex-1">
                                                 <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
                                                     💳
@@ -159,7 +164,7 @@
                                         <!-- MoMo -->
                                         <label class="flex items-center p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 transition-colors relative">
                                             <input type="radio" name="payment_method" value="momo" class="mr-3"
-                                                   {{ old('payment_method') === 'momo' ? 'checked' : '' }} onclick="showMomoModal()">
+                                                {{ old('payment_method') === 'momo' ? 'checked' : '' }}>
                                             <div class="flex items-center flex-1">
                                                 <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center mr-3 border border-gray-200">
                                                     <img src="https://homepage.momocdn.net/fileuploads/svg/momo-file-240411162904.svg"
@@ -320,12 +325,65 @@
     </div>
 
     <script>
+        // Validation cho số điện thoại
+        document.getElementById('customer_phone').addEventListener('input', function(e) {
+            let phone = e.target.value;
+            let phoneRegex = /^0[0-9]{9}$/;
+            let phoneError = document.getElementById('phone-error');
+
+            // Loại bỏ các ký tự không phải số
+            phone = phone.replace(/[^0-9]/g, '');
+
+            // Giới hạn 10 ký tự
+            if (phone.length > 10) {
+                phone = phone.substring(0, 10);
+            }
+
+            // Cập nhật giá trị input
+            e.target.value = phone;
+
+            // Kiểm tra validation
+            if (phone.length === 0) {
+                phoneError.classList.add('hidden');
+                e.target.style.borderColor = '#d1d5db'; // Gray-300
+            } else if (phone.length === 10 && phoneRegex.test(phone)) {
+                phoneError.classList.add('hidden');
+                e.target.style.borderColor = '#10b981'; // Green-500
+            } else {
+                phoneError.classList.remove('hidden');
+                e.target.style.borderColor = '#ef4444'; // Red-500
+            }
+        });
+
+        // Validation khi focus out
+        document.getElementById('customer_phone').addEventListener('blur', function(e) {
+            let phone = e.target.value;
+            let phoneRegex = /^0[0-9]{9}$/;
+            let phoneError = document.getElementById('phone-error');
+
+            if (phone.length > 0 && !phoneRegex.test(phone)) {
+                phoneError.classList.remove('hidden');
+                e.target.style.borderColor = '#ef4444';
+            }
+        });
+
         document.getElementById('checkout-form').addEventListener('submit', function(e) {
             const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
+            const phone = document.getElementById('customer_phone').value;
+            const phoneRegex = /^0[0-9]{9}$/;
 
+            // Kiểm tra phương thức thanh toán
             if (!paymentMethod) {
                 e.preventDefault();
                 alert('Vui lòng chọn phương thức thanh toán.');
+                return;
+            }
+
+            // Kiểm tra số điện thoại
+            if (!phoneRegex.test(phone)) {
+                e.preventDefault();
+                alert('Số điện thoại phải bắt đầu bằng 0 và có đúng 10 chữ số.');
+                document.getElementById('customer_phone').focus();
                 return;
             }
 
