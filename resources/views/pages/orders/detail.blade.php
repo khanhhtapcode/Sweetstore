@@ -252,46 +252,52 @@
     </div>
 
     <!-- Đánh giá tài xế -->
-    @if($order->status === 'delivered' && !$order->driver_rating)
-    <div class="mt-6 bg-white rounded-lg shadow p-6">
-        <h4 class="text-lg font-semibold text-gray-900 mb-4">🚗 Đánh giá tài xế giao hàng</h4>
-        <form id="driver-rating-form" action="{{ route('driver-ratings.store') }}" method="POST">
-            @csrf
-            <input type="hidden" name="order_id" value="{{ $order->id }}">
-            <input type="hidden" name="driver_id" value="{{ $order->driver->id }}">
-            <input type="hidden" name="user_id" value="{{ Auth::id() }}">
-            <div class="flex items-center space-x-2 mb-4">
-                <label for="rating" class="text-sm text-gray-700">Chọn sao:</label>
-                @for($i = 1; $i <= 5; $i++)
-                    <label>
-                        <input type="radio" name="rating" value="{{ $i }}" required>
-                        <span class="text-yellow-500 text-xl">★</span>
-                    </label>
-                @endfor
+    @if($order->status === 'delivered')
+        @if(!$order->driver_rating)
+            <div class="mt-6 bg-white rounded-lg shadow p-6">
+                <h4 class="text-lg font-semibold text-gray-900 mb-4">🚗 Đánh giá tài xế giao hàng</h4>
+                <form id="driver-rating-form" action="{{ route('driver-ratings.store') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="order_id" value="{{ $order->id }}">
+                    <input type="hidden" name="driver_id" value="{{ $order->driver->id }}">
+                    <input type="hidden" name="user_id" value="{{ Auth::id() }}">
+                    <div class="flex items-center space-x-2 mb-4">
+                        <label for="rating" class="text-sm text-gray-700">Chọn sao:</label>
+                        @for($i = 1; $i <= 5; $i++)
+                            <label>
+                                <input type="radio" name="rating" value="{{ $i }}" required>
+                                <span class="text-yellow-500 text-xl">★</span>
+                            </label>
+                        @endfor
+                    </div>
+                    <div class="mb-4">
+                        <label for="comment" class="block text-sm text-gray-700 mb-1">Nhận xét:</label>
+                        <textarea name="comment" id="comment" rows="3"
+                            class="w-full border-gray-300 rounded shadow-sm focus:ring focus:ring-blue-200"></textarea>
+                    </div>
+                    <button type="submit"
+                        class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded">
+                        ✅ Gửi đánh giá
+                    </button>
+                </form>
             </div>
-            <div class="mb-4">
-                <label for="comment" class="block text-sm text-gray-700 mb-1">Nhận xét:</label>
-                <textarea name="comment" id="comment" rows="3"
-                    class="w-full border-gray-300 rounded shadow-sm focus:ring focus:ring-blue-200"></textarea>
+        @else
+            <div class="mt-6 bg-white rounded-lg shadow p-6">
+                <h4 class="text-lg font-semibold text-gray-900 mb-4">📊 Đánh giá tài xế</h4>
+                <p class="text-gray-700">
+                    Bạn đã đánh giá tài xế <strong>{{ $order->driver->name }}</strong> với số sao 
+                    <span class="text-yellow-500 text-xl">
+                        @for($i = 1; $i <= 5; $i++)
+                            <span>{{ $i <= $order->driver_rating->rating ? '★' : '☆' }}</span>
+                        @endfor
+                    </span>
+                    ({{ $order->driver_rating->rating }} sao).
+                </p>
+                @if($order->driver_rating->comment)
+                    <p class="text-gray-700 italic mt-2">“{{ $order->driver_rating->comment }}”</p>
+                @endif
             </div>
-            <button type="submit"
-                class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded">
-                ✅ Gửi đánh giá
-            </button>
-        </form>
-    </div>
-    @elseif($order->driver_rating)
-    <div class="mt-6 bg-white rounded-lg shadow p-6">
-        <h4 class="text-lg font-semibold text-gray-900 mb-4">📊 Đánh giá tài xế</h4>
-        <p class="text-yellow-500 text-xl mb-2">
-            @for($i = 1; $i <= 5; $i++)
-                <span>{{ $i <= $order->driver_rating->rating ? '★' : '☆' }}</span>
-            @endfor
-        </p>
-        @if($order->driver_rating->comment)
-        <p class="text-gray-700 italic">“{{ $order->driver_rating->comment }}”</p>
         @endif
-    </div>
     @endif
 
     <!-- Hỗ trợ khách hàng -->
@@ -387,4 +393,4 @@
             });
         }, 5000);
     </script>
-</x-app-layout> 
+</x-app-layout>

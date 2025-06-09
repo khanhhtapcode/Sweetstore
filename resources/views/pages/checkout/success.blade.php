@@ -199,6 +199,4 @@
             </div>
         </div>
     </div>
-</x-app-layout>Mã giao dịch: MOMO{{ $order->created_at->timestamp }}{{ $order->id }}</p>
-<p>Thời gian: {{ $order->created_at->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i:s') }}</p>
-<p>
+</x-app-layout>

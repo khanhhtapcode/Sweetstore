@@ -98,7 +98,7 @@
                                         <!-- COD -->
                                         <label class="flex items-center p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 transition-colors">
                                             <input type="radio" name="payment_method" value="cod" class="mr-3"
-                                                {{ old('payment_method', 'cod') === 'cod' ? 'checked' : '' }}>
+                                                   {{ old('payment_method', 'cod') === 'cod' ? 'checked' : '' }}>
                                             <div class="flex items-center flex-1">
                                                 <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center mr-3">
                                                     💵
@@ -113,7 +113,7 @@
                                         <!-- Bank Transfer -->
                                         <label class="flex items-center p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 transition-colors">
                                             <input type="radio" name="payment_method" value="bank_transfer" class="mr-3"
-                                                {{ old('payment_method') === 'bank_transfer' ? 'checked' : '' }}>
+                                                   {{ old('payment_method') === 'bank_transfer' ? 'checked' : '' }}>
                                             <div class="flex items-center flex-1">
                                                 <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                                                     🏦
@@ -125,10 +125,26 @@
                                             </div>
                                         </label>
 
+                                        <!-- VNPay -->
+                                        <label class="flex items-center p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 transition-colors">
+                                            <input type="radio" name="payment_method" value="vnpay" class="mr-3"
+                                                   {{ old('payment_method') === 'vnpay' ? 'checked' : '' }} onclick="submitVnpayForm()">
+                                            <div class="flex items-center flex-1">
+                                                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center mr-3 border border-gray-200">
+                                                    <img src="https://vnpay.vn/assets/images/logo-vnpay.png"
+                                                         alt="VNPay Logo" class="w-8 h-8">
+                                                </div>
+                                                <div>
+                                                    <div class="font-medium">Thanh toán qua VNPay</div>
+                                                    <div class="text-sm text-gray-600">Thanh toán online qua cổng VNPay</div>
+                                                </div>
+                                            </div>
+                                        </label>
+
                                         <!-- Credit Card -->
                                         <label class="flex items-center p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 transition-colors">
                                             <input type="radio" name="payment_method" value="credit_card" class="mr-3"
-                                                {{ old('payment_method') === 'credit_card' ? 'checked' : '' }}>
+                                                   {{ old('payment_method') === 'credit_card' ? 'checked' : '' }}>
                                             <div class="flex items-center flex-1">
                                                 <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
                                                     💳
@@ -143,7 +159,7 @@
                                         <!-- MoMo -->
                                         <label class="flex items-center p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 transition-colors relative">
                                             <input type="radio" name="payment_method" value="momo" class="mr-3"
-                                                {{ old('payment_method') === 'momo' ? 'checked' : '' }}>
+                                                   {{ old('payment_method') === 'momo' ? 'checked' : '' }} onclick="showMomoModal()">
                                             <div class="flex items-center flex-1">
                                                 <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center mr-3 border border-gray-200">
                                                     <img src="https://homepage.momocdn.net/fileuploads/svg/momo-file-240411162904.svg"
@@ -164,10 +180,21 @@
                                     @enderror
                                 </div>
 
-                                <button type="submit"
+                                <button type="submit" form="checkout-form"
                                         class="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium text-lg">
                                     Đặt hàng
                                 </button>
+                            </form>
+
+                            <!-- Form ẩn cho VNPay -->
+                            <form id="vnpay-form" action="{{ route('vnpay.payment') }}" method="POST" style="display: none;">
+                                @csrf
+                                <input type="hidden" name="redirect" value="1">
+                                <input type="hidden" name="customer_name" id="vnpay_customer_name" value="">
+                                <input type="hidden" name="customer_email" id="vnpay_customer_email" value="">
+                                <input type="hidden" name="customer_phone" id="vnpay_customer_phone" value="">
+                                <input type="hidden" name="customer_address" id="vnpay_customer_address" value="">
+                                <input type="hidden" name="notes" id="vnpay_notes" value="">
                             </form>
                         </div>
                     </div>
@@ -293,13 +320,28 @@
     </div>
 
     <script>
-        // Xử lý form submit
         document.getElementById('checkout-form').addEventListener('submit', function(e) {
-            const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+            const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
+
+            if (!paymentMethod) {
+                e.preventDefault();
+                alert('Vui lòng chọn phương thức thanh toán.');
+                return;
+            }
 
             if (paymentMethod === 'momo') {
                 e.preventDefault();
                 showMomoModal();
+                return;
+            } else if (paymentMethod === 'vnpay') {
+                e.preventDefault();
+                // Cập nhật các trường hidden trong form vnpay-form
+                document.getElementById('vnpay_customer_name').value = document.getElementById('customer_name').value;
+                document.getElementById('vnpay_customer_email').value = document.getElementById('customer_email').value;
+                document.getElementById('vnpay_customer_phone').value = document.getElementById('customer_phone').value;
+                document.getElementById('vnpay_customer_address').value = document.getElementById('customer_address').value;
+                document.getElementById('vnpay_notes').value = document.getElementById('notes').value;
+                document.getElementById('vnpay-form').submit();
                 return;
             }
 

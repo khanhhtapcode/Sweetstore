@@ -142,4 +142,8 @@ Route::get('/skip-driver-rating', [DriverRatingController::class, 'skipDriverRat
 // Chatbot Route
 Route::post('/chatbot/chat', [ChatbotController::class, 'chat'])->name('chatbot.chat');
 
+// Cong thanh toan
+Route::post('/vnpay_payment', [CheckoutController::class, 'vnpay_payment'])->name('vnpay.payment');
+Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])->name('checkout.success');
+
 require __DIR__ . '/auth.php';
