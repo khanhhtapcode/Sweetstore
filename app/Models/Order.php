@@ -253,4 +253,8 @@ class Order extends Model
             }
         });
     }
+    public function driverRating()
+    {
+        return $this->hasOne(DriverRating::class, 'order_id', 'id'); // Quan hệ với đánh giá
+    }
 }

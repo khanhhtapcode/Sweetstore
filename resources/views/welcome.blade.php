@@ -680,6 +680,10 @@
     </div>
 </div>
 
+
+<!-- Driver Rating Pop-up Overlay -->
+    @include('pages.driver_rating.overlay_driver_rating')
+
 <!-- Hero Section -->
 <section id="home" class="hero-bg py-20 lg:py-32">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1277,6 +1281,7 @@
 
 <script>
     let isCartActionRunning = false;
+    let isDriverRatingRunning = false;
 
     // Hiển thị thông báo
     function showNotification(message, type = 'success') {
@@ -1519,7 +1524,16 @@
                 }
             });
         });
+
+        //Tự động mở popup nếu có đơn hàng cần đánh giá
+        const orderToRate = @json($orderToRate);
+        if (orderToRate) {
+            openDriverRatingOverlay();
+        }
+
+        delegateDriverRatingEvents();
     });
+
     // Chatbot Functions
     let chatbotOpen = false;
 
@@ -1534,7 +1548,6 @@
             setTimeout(() => {
                 container.style.animation = 'messageSlide 0.3s ease';
             }, 10);
-            // Focus vào input
             setTimeout(() => {
                 document.getElementById('chatbotInput').focus();
             }, 100);
@@ -1549,22 +1562,21 @@
 
         if (!message) return;
 
-        // Thêm tin nhắn của user
         addMessage(message, 'user');
         input.value = '';
 
-        // Hiển thị typing indicator
         showTyping(true);
 
-        // Gửi đến server
         fetch('/chatbot/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            },
-            body: JSON.stringify({ message: message })
-        })
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: JSON.stringify({
+                    message: message
+                })
+            })
             .then(response => response.json())
             .then(data => {
                 showTyping(false);
@@ -1604,7 +1616,6 @@
         }
     }
 
-    // Enter để gửi tin nhắn
     document.addEventListener('DOMContentLoaded', function() {
         const chatInput = document.getElementById('chatbotInput');
         if (chatInput) {
@@ -1616,5 +1627,112 @@
             });
         }
     });
+
+    // Hiển thị Driver Rating
+    function openDriverRatingOverlay() {
+        const overlay = document.getElementById('driverRatingOverlay');
+        if (!overlay) return;
+        overlay.style.display = 'flex';
+        setTimeout(() => overlay.classList.add('opacity-100'), 10);
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDriverRatingOverlay() {
+        const overlay = document.getElementById('driverRatingOverlay');
+        if (!overlay) return;
+        overlay.classList.remove('opacity-100');
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }, 300);
+    }
+
+    async function submitDriverRating(event) {
+        event.preventDefault();
+        if (isDriverRatingRunning) return;
+        isDriverRatingRunning = true;
+
+        const form = event.target.closest('form');
+        if (!form) {
+            isDriverRatingRunning = false;
+            showNotification('Không tìm thấy form đánh giá.', 'error');
+            return;
+        }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        let originalText = '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Đang gửi...';
+        }
+
+        try {
+            const formData = new FormData(form);
+
+            // Kiểm tra form.action
+            if (!form.action || form.action === window.location.href) {
+                throw new Error('URL hành động của form không hợp lệ.');
+            }
+
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Có lỗi khi gửi đánh giá tài xế.');
+            }
+
+            showNotification(data.message || 'Cảm ơn bạn đã đánh giá tài xế!', 'success');
+            closeDriverRatingOverlay();
+
+        } catch (error) {
+            console.error('Driver rating error:', error);
+            showNotification(error.message || 'Lỗi hệ thống, vui lòng thử lại.', 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+            isDriverRatingRunning = false;
+        }
+    }
+
+    function skipDriverRating(event) {
+        event.preventDefault();
+        fetch('{{ route("skip.driver.rating") }}', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+            },
+        }).then(() => {
+            closeDriverRatingOverlay();
+        }).catch(() => {
+            closeDriverRatingOverlay();
+        });
+    }
+
+    function delegateDriverRatingEvents() {
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('#closeRatingOverlay')) {
+                closeDriverRatingOverlay();
+            }
+            if (e.target.matches('#driverRatingSkip')) {
+                skipDriverRating(e);
+            }
+        });
+
+        const driverRatingForm = document.querySelector('#driverRatingOverlay form');
+        if (driverRatingForm) {
+            driverRatingForm.addEventListener('submit', submitDriverRating);
+        }
+    }
 </script>
 </html>

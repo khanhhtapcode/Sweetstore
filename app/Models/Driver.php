@@ -24,6 +24,7 @@ class Driver extends Model
         'rating',
         'total_deliveries',
         'notes',
+        'average_rating',
         'last_active_at'
     ];
 
@@ -240,5 +241,10 @@ class Driver extends Model
             ->count();
 
         return $currentOrdersCount < 3;
+    }
+
+    public function driverRatings()
+    {
+        return $this->hasMany(DriverRating::class, 'driver_id');
     }
 }

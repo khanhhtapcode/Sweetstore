@@ -15,12 +15,23 @@ use App\Http\Controllers\RatingController;
 use App\Http\Controllers\RatingReplyController;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\DriverRatingController;
+use App\Models\Order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
+// Route::get('/', function () {
+//     return view('welcome');
+// })->name('home');
 Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+    $orderToRate = Auth::check() ? Order::where('user_id', Auth::id())
+        ->where('status', Order::STATUS_DELIVERED)
+        ->whereDoesntHave('driverRating')
+        ->with('driver')
+        ->first() : null;
 
+    return view('welcome', compact('orderToRate'));
+})->name('home');
 // User Dashboard
 Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
     ->middleware(['auth', 'verified', RedirectAdminMiddleware::class])
@@ -123,6 +134,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/dashboard/order-status-data', [DashboardController::class, 'getOrderStatusData'])->name('dashboard.order-status-data');
     Route::get('/dashboard/driver-performance', [DashboardController::class, 'getDriverPerformance'])->name('dashboard.driver-performance');
 });
+
+// Driver Rating Routes
+Route::post('/driver-ratings', [DriverRatingController::class, 'store'])->name('driver-ratings.store');
+Route::get('/skip-driver-rating', [DriverRatingController::class, 'skipDriverRating'])->name('skip.driver.rating');
 
 // Chatbot Route
 Route::post('/chatbot/chat', [ChatbotController::class, 'chat'])->name('chatbot.chat');
