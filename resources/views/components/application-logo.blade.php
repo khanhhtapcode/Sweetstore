@@ -1,3 +1,77 @@
-<svg viewBox="0 0 316 316" xmlns="http://www.w3.org/2000/svg" {{ $attributes }}>
-    <path d="M305.8 81.125C305.77 80.995 305.69 80.885 305.65 80.755C305.56 80.525 305.49 80.285 305.37 80.075C305.29 79.935 305.17 79.815 305.07 79.685C304.94 79.515 304.83 79.325 304.68 79.175C304.55 79.045 304.39 78.955 304.25 78.845C304.09 78.715 303.95 78.575 303.77 78.475L251.32 48.275C249.97 47.495 248.31 47.495 246.96 48.275L194.51 78.475C194.33 78.575 194.19 78.725 194.03 78.845C193.89 78.955 193.73 79.045 193.6 79.175C193.45 79.325 193.34 79.515 193.21 79.685C193.11 79.815 192.99 79.935 192.91 80.075C192.79 80.285 192.71 80.525 192.63 80.755C192.58 80.875 192.51 80.995 192.48 81.125C192.38 81.495 192.33 81.875 192.33 82.265V139.625L148.62 164.795V52.575C148.62 52.185 148.57 51.805 148.47 51.435C148.44 51.305 148.36 51.195 148.32 51.065C148.23 50.835 148.16 50.595 148.04 50.385C147.96 50.245 147.84 50.125 147.74 49.995C147.61 49.825 147.5 49.635 147.35 49.485C147.22 49.355 147.06 49.265 146.92 49.155C146.76 49.025 146.62 48.885 146.44 48.785L93.99 18.585C92.64 17.805 90.98 17.805 89.63 18.585L37.18 48.785C37 48.885 36.86 49.035 36.7 49.155C36.56 49.265 36.4 49.355 36.27 49.485C36.12 49.635 36.01 49.825 35.88 49.995C35.78 50.125 35.66 50.245 35.58 50.385C35.46 50.595 35.38 50.835 35.3 51.065C35.25 51.185 35.18 51.305 35.15 51.435C35.05 51.805 35 52.185 35 52.575V232.235C35 233.795 35.84 235.245 37.19 236.025L142.1 296.425C142.33 296.555 142.58 296.635 142.82 296.725C142.93 296.765 143.04 296.835 143.16 296.865C143.53 296.965 143.9 297.015 144.28 297.015C144.66 297.015 145.03 296.965 145.4 296.865C145.5 296.835 145.59 296.775 145.69 296.745C145.95 296.655 146.21 296.565 146.45 296.435L251.36 236.035C252.72 235.255 253.55 233.815 253.55 232.245V174.885L303.81 145.945C305.17 145.165 306 143.725 306 142.155V82.265C305.95 81.875 305.89 81.495 305.8 81.125ZM144.2 227.205L100.57 202.515L146.39 176.135L196.66 147.195L240.33 172.335L208.29 190.625L144.2 227.205ZM244.75 114.995V164.795L226.39 154.225L201.03 139.625V89.825L219.39 100.395L244.75 114.995ZM249.12 57.105L292.81 82.265L249.12 107.425L205.43 82.265L249.12 57.105ZM114.49 184.425L96.13 194.995V85.305L121.49 70.705L139.85 60.135V169.815L114.49 184.425ZM91.76 27.425L135.45 52.585L91.76 77.745L48.07 52.585L91.76 27.425ZM43.67 60.135L62.03 70.705L87.39 85.305V202.545V202.555V202.565C87.39 202.735 87.44 202.895 87.46 203.055C87.49 203.265 87.49 203.485 87.55 203.695V203.705C87.6 203.875 87.69 204.035 87.76 204.195C87.84 204.375 87.89 204.575 87.99 204.745C87.99 204.745 87.99 204.755 88 204.755C88.09 204.905 88.22 205.035 88.33 205.175C88.45 205.335 88.55 205.495 88.69 205.635L88.7 205.645C88.82 205.765 88.98 205.855 89.12 205.965C89.28 206.085 89.42 206.225 89.59 206.325C89.6 206.325 89.6 206.325 89.61 206.335C89.62 206.335 89.62 206.345 89.63 206.345L139.87 234.775V285.065L43.67 229.705V60.135ZM244.75 229.705L148.58 285.075V234.775L219.8 194.115L244.75 179.875V229.705ZM297.2 139.625L253.49 164.795V114.995L278.85 100.395L297.21 89.825V139.625H297.2Z"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="120" viewBox="0 0 300 120">
+    <defs>
+        <!-- Gradient definitions -->
+        <linearGradient id="pinkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#ff8fab;stop-opacity:1"/>
+            <stop offset="50%" style="stop-color:#ff4d7a;stop-opacity:1"/>
+            <stop offset="100%" style="stop-color:#e91e63;stop-opacity:1"/>
+        </linearGradient>
+
+        <linearGradient id="lightPinkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#fce4ec;stop-opacity:1"/>
+            <stop offset="100%" style="stop-color:#f8bbd9;stop-opacity:1"/>
+        </linearGradient>
+
+        <linearGradient id="creamGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#fff9c4;stop-opacity:1"/>
+            <stop offset="100%" style="stop-color:#fff3e0;stop-opacity:1"/>
+        </linearGradient>
+
+        <!-- Drop shadow filter -->
+        <filter id="dropshadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#ff4d7a" flood-opacity="0.3"/>
+        </filter>
+    </defs>
+
+    <!-- Background circle -->
+    <circle cx="60" cy="60" r="50" fill="url(#lightPinkGradient)" filter="url(#dropshadow)" opacity="0.8"/>
+
+    <!-- Cupcake base -->
+    <path d="M35 65 Q35 70 40 70 L80 70 Q85 70 85 65 L82 45 Q82 40 77 40 L43 40 Q38 40 38 45 Z" fill="url(#pinkGradient)" stroke="#e91e63" stroke-width="1"/>
+
+    <!-- Cupcake liner pattern -->
+    <rect x="40" y="60" width="4" height="8" fill="#d81b60" opacity="0.6"/>
+    <rect x="48" y="60" width="4" height="8" fill="#d81b60" opacity="0.6"/>
+    <rect x="56" y="60" width="4" height="8" fill="#d81b60" opacity="0.6"/>
+    <rect x="64" y="60" width="4" height="8" fill="#d81b60" opacity="0.6"/>
+    <rect x="72" y="60" width="4" height="8" fill="#d81b60" opacity="0.6"/>
+
+    <!-- Cupcake frosting -->
+    <path d="M38 45 Q40 30 50 32 Q55 28 60 32 Q65 28 70 32 Q80 30 82 45 Q85 35 75 35 Q70 25 60 30 Q50 25 45 35 Q35 35 38 45 Z" fill="url(#creamGradient)" stroke="#f8bbd9" stroke-width="1"/>
+
+    <!-- Cherry on top -->
+    <circle cx="60" cy="35" r="4" fill="#e91e63"/>
+    <ellipse cx="58" cy="33" rx="1.5" ry="1" fill="#ff8fab"/>
+
+    <!-- Cherry stem -->
+    <path d="M60 31 Q58 28 56 26" stroke="#4caf50" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <!-- Sparkles around cupcake -->
+    <g fill="#ff4d7a" opacity="0.7">
+        <polygon points="25,35 27,39 31,37 27,41 25,45 23,41 19,37 23,39"/>
+        <polygon points="90,25 91,27 93,26 91,28 90,30 89,28 87,26 89,27"/>
+        <polygon points="95,55 96,57 98,56 96,58 95,60 94,58 92,56 94,57"/>
+        <polygon points="20,70 21,72 23,71 21,73 20,75 19,73 17,71 19,72"/>
+    </g>
+
+    <!-- Company name -->
+    <text x="130" y="45" font-family="Georgia, serif" font-size="24" font-weight="bold" fill="url(#pinkGradient)">
+        Sweet
+    </text>
+    <text x="130" y="70" font-family="Georgia, serif" font-size="24" font-weight="bold" fill="#e91e63">
+        Delights
+    </text>
+
+    <!-- Decorative underline -->
+    <path d="M130 75 Q180 73 230 75" stroke="url(#pinkGradient)" stroke-width="2" fill="none"/>
+
+    <!-- Small decorative elements -->
+    <circle cx="235" cy="40" r="2" fill="#ff8fab" opacity="0.8"/>
+    <circle cx="240" cy="50" r="1.5" fill="#f8bbd9" opacity="0.8"/>
+    <circle cx="245" cy="35" r="1" fill="#ff4d7a" opacity="0.8"/>
+
+    <!-- Tagline -->
+    <text x="130" y="90" font-family="Arial, sans-serif" font-size="12" font-style="italic" fill="#e91e63" opacity="0.8">
+        Where sweetness meets perfection
+    </text>
 </svg>

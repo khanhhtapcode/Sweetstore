@@ -69,18 +69,25 @@ class CheckoutController extends Controller
         $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
-            'customer_phone' => 'required|string|max:20',
+            'customer_phone' => [
+                'required',
+                'string',
+                'size:10',                    // Chính xác 10 ký tự
+                'regex:/^0[0-9]{9}$/'        // Bắt đầu bằng 0, theo sau là 9 chữ số
+            ],
             'customer_address' => 'required|string|max:1000',
-            'payment_method' => 'required|in:cod,bank_transfer,credit_card,momo,VNpay', // Thêm momo vào đây
+            'payment_method' => 'required|in:cod,bank_transfer,credit_card,momo,zalopay,vnpay',
             'notes' => 'nullable|string|max:1000'
         ], [
             'customer_name.required' => 'Vui lòng nhập họ tên.',
             'customer_email.required' => 'Vui lòng nhập email.',
             'customer_email.email' => 'Email không hợp lệ.',
             'customer_phone.required' => 'Vui lòng nhập số điện thoại.',
+            'customer_phone.size' => 'Số điện thoại phải có đúng 10 ký tự.',
+            'customer_phone.regex' => 'Số điện thoại phải bắt đầu bằng số 0 và có đúng 10 chữ số.',
             'customer_address.required' => 'Vui lòng nhập địa chỉ giao hàng.',
             'payment_method.required' => 'Vui lòng chọn phương thức thanh toán.',
-            'payment_method.in' => 'Phương thức thanh toán không hợp lệ.' // Đây là message lỗi bạn thấy
+            'payment_method.in' => 'Phương thức thanh toán không hợp lệ.'
         ]);
 
 
