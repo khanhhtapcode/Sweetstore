@@ -11,49 +11,49 @@ use Illuminate\Support\Facades\Auth;
 class DriverRatingController extends Controller
 {
     public function store(Request $request)
-{
-    $request->validate([
-        'order_id' => 'required|exists:orders,id',
-        'driver_id' => 'required|exists:drivers,id',
-        'user_id' => 'required|exists:users,id',
-        'rating' => 'required|integer|between:1,5',
-        'comment' => 'nullable|string|max:500',
-    ]);
+    {
+        $request->validate([
+            'order_id' => 'required|exists:orders,id',
+            'driver_id' => 'required|exists:drivers,id',
+            'user_id' => 'required|exists:users,id',
+            'rating' => 'required|integer|between:1,5',
+            'comment' => 'nullable|string|max:500',
+        ]);
 
-    $order = Order::findOrFail($request->order_id);
+        $order = Order::findOrFail($request->order_id);
 
-    if ($order->user_id !== Auth::id()) {
+        if ($order->user_id !== Auth::id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn không có quyền đánh giá đơn hàng này.'
+            ], 403);
+        }
+
+        if ($order->driverRating) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đơn hàng đã được đánh giá.'
+            ], 422);
+        }
+
+        $driverRating = DriverRating::create([
+            'order_id' => $request->order_id,
+            'driver_id' => $request->driver_id,
+            'user_id' => $request->user_id,
+            'rating' => $request->rating,
+            'comment' => $request->comment,
+        ]);
+
+        $driver = Driver::findOrFail($request->driver_id);
+        $averageRating = DriverRating::where('driver_id', $request->driver_id)->avg('rating');
+        $driver->update(['average_rating' => round($averageRating, 1)]);
+
         return response()->json([
-            'success' => false,
-            'message' => 'Bạn không có quyền đánh giá đơn hàng này.'
-        ], 403);
+            'success' => true,
+            'message' => 'Đánh giá đã được gửi!',
+            'average_rating' => $driver->average_rating
+        ]);
     }
-
-    if ($order->driverRating) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Đơn hàng đã được đánh giá.'
-        ], 422);
-    }
-
-    $driverRating = DriverRating::create([
-        'order_id' => $request->order_id,
-        'driver_id' => $request->driver_id,
-        'user_id' => $request->user_id,
-        'rating' => $request->rating,
-        'comment' => $request->comment,
-    ]);
-
-    $driver = Driver::findOrFail($request->driver_id);
-    $averageRating = DriverRating::where('driver_id', $request->driver_id)->avg('rating');
-    $driver->update(['average_rating' => round($averageRating, 1)]);
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Đánh giá đã được gửi!',
-        'average_rating' => $driver->average_rating
-    ]);
-}
     public function skipDriverRating(Request $request)
     {
         $orderToRate = Order::where('user_id', Auth::id())
@@ -77,5 +77,28 @@ class DriverRatingController extends Controller
 
         session(['skip_rating' => true]);
         return redirect()->route('home')->with('success', 'Đã bỏ qua đánh giá.');
+    }
+    public function orderHistory(Request $request)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $query = Order::with(['orderItems.product', 'driver', 'driverRating'])
+            ->where('user_id', Auth::id());
+
+        // Filter by status if provided
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Search by order number
+        if ($request->filled('search')) {
+            $query->where('order_number', 'like', '%' . $request->search . '%');
+        }
+
+        $orders = $query->latest()->paginate(10)->withQueryString();
+
+        return view('pages.orders.history', compact('orders'));
     }
 }

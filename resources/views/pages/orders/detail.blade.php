@@ -148,8 +148,8 @@
             <p class="text-sm text-gray-600">🚗 Tài xế:</p>
             <p class="font-medium mt-1">{{ $order->driver->name }}</p>
             <p class="font-medium mt-1">📞 Số điện thoại: {{ $order->driver->phone }}</p>
-            <p class="text-sm text-gray-600 mt-2">🚚 Loại xe: {{ $order->driver->vehicle_type}}</p>
-            <p class="text-sm text-gray-600 mt-2"> Biển số: {{ $order->driver->vehicle_number }}</p>
+            <p class="text-sm text-gray-600 mt-2">🚚 Loại xe: {{ $order->driver->vehicle_type }}</p>
+            <p class="text-sm text-gray-600 mt-2">Biển số: {{ $order->driver->vehicle_number }}</p>
 
             @if($order->driver->average_rating)
             <p class="text-sm text-gray-600 mt-2">🌟 Điểm trung bình:</p>
@@ -256,49 +256,80 @@
     </div>
 
     <!-- Đánh giá tài xế -->
-    @if($order->status === 'delivered')
-        @if(!$order->driver_rating)
+    @if($order->status === 'delivered' && $order->driver)
+        @if(!$order->driverRating) <!-- Chưa đánh giá -->
             <div class="mt-6 bg-white rounded-lg shadow p-6">
                 <h4 class="text-lg font-semibold text-gray-900 mb-4">🚗 Đánh giá tài xế giao hàng</h4>
+                <p class="text-sm text-gray-600 mb-4">Hãy cho chúng tôi biết trải nghiệm của bạn với tài xế!</p>
                 <form id="driver-rating-form" action="{{ route('driver-ratings.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="order_id" value="{{ $order->id }}">
                     <input type="hidden" name="driver_id" value="{{ $order->driver->id }}">
                     <input type="hidden" name="user_id" value="{{ Auth::id() }}">
+
                     <div class="flex items-center space-x-2 mb-4">
-                        <label for="rating" class="text-sm text-gray-700">Chọn sao:</label>
+                        <label class="text-sm text-gray-700 mr-2">Chọn sao:</label>
                         @for($i = 1; $i <= 5; $i++)
-                            <label>
-                                <input type="radio" name="rating" value="{{ $i }}" required>
-                                <span class="text-yellow-500 text-xl">★</span>
+                            <label class="flex flex-col items-center text-xs text-gray-500">
+                                <input type="radio" name="rating" value="{{ $i }}" class="sr-only" required>
+                                <span class="text-yellow-500 text-2xl cursor-pointer hover:scale-110 transition">{{ $i }}★</span>
                             </label>
                         @endfor
                     </div>
+
                     <div class="mb-4">
                         <label for="comment" class="block text-sm text-gray-700 mb-1">Nhận xét:</label>
                         <textarea name="comment" id="comment" rows="3"
-                            class="w-full border-gray-300 rounded shadow-sm focus:ring focus:ring-blue-200"></textarea>
+                                  class="w-full border-gray-300 rounded shadow-sm focus:ring focus:ring-blue-200"
+                                  placeholder="Tài xế thân thiện, giao hàng đúng giờ..."></textarea>
                     </div>
+
                     <button type="submit"
-                        class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded">
+                            class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded">
                         ✅ Gửi đánh giá
                     </button>
                 </form>
+
+                <!-- Hiển thị trung bình số sao của tài xế -->
+                @if($order->driver->average_rating)
+                    <div class="mt-4 p-3 bg-gray-50 rounded">
+                        <p class="text-sm text-gray-600">🌟 Điểm trung bình của tài xế:</p>
+                        <p class="text-yellow-500 text-xl">
+                            @for($i = 1; $i <= 5; $i++)
+                                <span>{{ $i <= round($order->driver->average_rating) ? '★' : '☆' }}</span>
+                            @endfor
+                            ({{ number_format($order->driver->average_rating, 1) }})
+                        </p>
+                    </div>
+                @endif
             </div>
-        @else
+        @else <!-- Đã đánh giá -->
             <div class="mt-6 bg-white rounded-lg shadow p-6">
                 <h4 class="text-lg font-semibold text-gray-900 mb-4">📊 Đánh giá tài xế</h4>
                 <p class="text-gray-700">
-                    Bạn đã đánh giá tài xế <strong>{{ $order->driver->name }}</strong> với số sao 
-                    <span class="text-yellow-500 text-xl">
-                        @for($i = 1; $i <= 5; $i++)
-                            <span>{{ $i <= $order->driver_rating->rating ? '★' : '☆' }}</span>
-                        @endfor
-                    </span>
-                    ({{ $order->driver_rating->rating }} sao).
+                    Bạn đã đánh giá tài xế <strong>{{ $order->driver->name }}</strong> với:
                 </p>
-                @if($order->driver_rating->comment)
-                    <p class="text-gray-700 italic mt-2">“{{ $order->driver_rating->comment }}”</p>
+                <p class="text-yellow-500 text-xl mt-1">
+                    @for($i = 1; $i <= 5; $i++)
+                        <span>{{ $i <= $order->driverRating->rating ? '★' : '☆' }}</span>
+                    @endfor
+                    <span class="text-gray-800 text-sm ml-2">({{ $order->driverRating->rating }} sao)</span>
+                </p>
+                @if($order->driverRating->comment)
+                    <p class="text-gray-700 italic mt-2">“{{ $order->driverRating->comment }}”</p>
+                @endif
+
+                <!-- Hiển thị trung bình số sao của tài xế -->
+                @if($order->driver->average_rating)
+                    <div class="mt-4 p-3 bg-gray-50 rounded">
+                        <p class="text-sm text-gray-600">🌟 Điểm trung bình của tài xế:</p>
+                        <p class="text-yellow-500 text-xl">
+                            @for($i = 1; $i <= 5; $i++)
+                                <span>{{ $i <= round($order->driver->average_rating) ? '★' : '☆' }}</span>
+                            @endfor
+                            ({{ number_format($order->driver->average_rating, 1) }})
+                        </p>
+                    </div>
                 @endif
             </div>
         @endif

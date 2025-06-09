@@ -232,7 +232,7 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900">
                                     <div class="flex items-center space-x-2">
-                                        <span>⭐ {{ $driver->formatted_rating }}</span>
+                                        <span>⭐ {{ $driver->average_rating }}</span>
                                     </div>
                                 </div>
                                 <div class="text-sm text-gray-500">
